@@ -1,0 +1,2313 @@
+import { useState } from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceDot, ResponsiveContainer } from "recharts";
+
+const SERIF="'Georgia', 'Times New Roman', serif";
+const MONO="'Courier New', monospace";
+const NSR_LOGO = "/mnt/user-data/uploads/1778758511310_image.png";
+
+const SECTIONS = [
+    {
+    id: "info",
+    label: "Property Info",
+    icon: "📋",
+    description: "Insured and inspection details",
+    noScore: true,
+    questions: [
+      { id: "i_insured",      label: "Insured / Company Name",         type: "text",   placeholder: "e.g. Acme Plastics LLC" },
+      { id: "i_address",      label: "Property Address",               type: "text",   placeholder: "Street address" },
+      { id: "i_city",         label: "City, State, ZIP",               type: "text",   placeholder: "e.g. Cincinnati, OH 45201" },
+      { id: "i_date",         label: "Inspection Date",                type: "text",   placeholder: "MM/DD/YYYY" },
+      { id: "i_inspector",    label: "Inspector Name",                 type: "text",   placeholder: "Your full name" },
+      { id: "i_title",        label: "Inspector Title / Company",      type: "text",   placeholder: "e.g. Senior Risk Engineer – XYZ Carriers" },
+      { id: "i_policy",       label: "Policy / Account Number",        type: "text",   placeholder: "Optional" },
+      { id: "i_purpose",      label: "Purpose of Survey",              type: "select", options: [
+          { label: "Select...", value: "" },
+          { label: "New Business Underwriting Survey", value: "new_biz" },
+          { label: "Renewal Survey", value: "renewal" },
+          { label: "Follow-Up / Re-Inspection", value: "followup" },
+          { label: "Loss Control Consultation", value: "lc_consult" },
+          { label: "Mid-Term Survey", value: "midterm" },
+        ]},
+      { id: "i_notes",        label: "General Comments / Introduction", type: "textarea", placeholder: "Briefly describe the overall nature of the operation and the scope of this survey…" },
+    ],
+  },
+
+    {
+    id: "construction",
+    label: "Construction",
+    icon: "🏗️",
+    description: "Building materials, dimensions, and structural characteristics",
+    questions: [
+      {
+        id: "c_class", label: "Primary Construction Class",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      { id: "c_sqft",      label: "Total Building Square Footage",   type: "number", placeholder: "e.g. 85000",  unit: "sq ft" },
+      { id: "c_stories",   label: "Number of Stories",               type: "number", placeholder: "e.g. 2",     unit: "stories" },
+      { id: "c_height",    label: "Clear Height at Eave / Ridge",    type: "number", placeholder: "e.g. 28",    unit: "ft" },
+      {
+        id: "c_age", label: "Year Built (or estimated age if unknown)",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      { id: "c_year_built", label: "Actual Year Built (if known)",   type: "text",   placeholder: "e.g. 1987" },
+      {
+        id: "c_roof_type", label: "Roof Construction Type",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "c_roof_cover", label: "Roof Covering Material",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "c_roof_age", label: "Roof Age / Last Replacement",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "c_fire_walls", label: "Are fire walls or fire barriers present to subdivide the building?",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      { id: "c_fire_wall_notes", label: "Fire Wall / Barrier Details (ratings, locations, openings)", type: "textarea", placeholder: "Describe fire wall ratings, locations, and any unprotected openings…" },
+      {
+        id: "c_skylights", label: "Are skylights or smoke/heat vents present in the roof?",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      { id: "c_notes", label: "Construction Notes / Observations", type: "textarea", placeholder: "Additional construction observations, deferred maintenance, notable features…" },
+    ],
+  },
+
+    {
+    id: "occupancy",
+    label: "Occupancy",
+    icon: "🏭",
+    description: "Plastics manufacturing operations, processes, and general hazards",
+    questions: [
+      {
+        id: "o_plastics_type", label: "Primary Type of Plastics Manufacturing",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      { id: "o_process_desc", label: "Describe the Manufacturing Process in Detail", type: "textarea", placeholder: "Describe raw materials used, process steps, te…" },
+      {
+        id: "o_resin_type", label: "Primary Resin / Polymer Type(s) Used",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      { id: "o_resin_notes", label: "Additional Resin / Material Details", type: "textarea", placeholder: "List all resins, additives, colorants, or solv…" },
+      {
+        id: "o_employees", label: "Number of Employees (peak shift)",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "o_shifts", label: "Operating Schedule",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "o_hk", label: "Overall Housekeeping / Cleanliness",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "o_hot_work", label: "Is a formal Hot Work Permit Program in place?",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "fl_present",
+        label: "Are flammable or combustible liquids stored or used on-site?",
+        type: "select",
+        options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "nh3_present",
+        label: "Is ammonia refrigeration present on-site?",
+        type: "select",
+        options: [
+          { label: "Select...", value: "", points: null },
+          { label: "Yes — complete Ammonia Refrigeration Supplement", value: "yes", points: null },
+          { label: "No — not present on-site", value: "no", points: null },
+        ],
+      },
+      { id: "o_notes", label: "Occupancy Notes / Observations", type: "textarea", placeholder: "Describe any unusual processes, recent changes…" },
+    ],
+  },
+
+    {
+    id: "process",
+    label: "Process Hazards",
+    icon: "⚙️",
+    description: "Equipment, heat sources, ig risks, and process-specific hazards",
+    questions: [
+      {
+        id: "ph_machine_temps", label: "Maximum Processing Temperatures Used",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "ph_overtemp", label: "Are over-temperature / thermal runaway controls in place on processing equipment?",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "ph_hydraulic", label: "Are hydraulic presses or injection molding machines present?",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "ph_electrical_class", label: "Are any areas classified as hazardous electrical locations (NEC Article 500/505)?",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "ph_static", label: "Static electricity controls for resin handling / conveyance",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "ph_oven_dryer", label: "Ovens, dryers, or heated molds in use?",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "ph_solvent", label: "Solvents or flammable adhesives used in process?",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "ph_pm", label: "Preventive Maintenance (PM) Program for Production Equipment",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      { id: "ph_equipment_list", label: "List Major Processing Equipment (type, quantity, age if known)", type: "textarea", placeholder: "e.g. 12 injection molding machines (80–2000 ton), 3 extruders, 2 blow molding lines…" },
+      { id: "ph_notes", label: "Process Hazard Notes / Observations", type: "textarea", placeholder: "Describe any unique process hazards, recent in…" },
+    ],
+  },
+
+    {
+    id: "storage",
+    label: "Storage",
+    icon: "📦",
+    description: "Raw material, in-process, and finished goods storage",
+    questions: [
+      {
+        id: "st_raw_form", label: "Form of Raw Resin Received / Stored",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "st_raw_qty", label: "Maximum On-Site Raw Resin Quantity",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "st_storage_height", label: "Maximum Storage Height (finished goods / raw material)",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "st_rack_type", label: "Storage Rack Configuration",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "st_fg_type", label: "Finished Goods Commodity Type / Packaging",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "st_outdoor", label: "Outdoor storage of plastics, raw materials, or finished goods?",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      { id: "st_sqft_storage", label: "Square Footage Dedicated to Storage", type: "number", placeholder: "e.g. 20000", unit: "sq ft" },
+      {
+        id: "wh_present",
+        label: "Is there a dedicated warehouse or storage area on-site requiring the Warehouse Supplement?",
+        type: "select",
+        options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      { id: "st_notes", label: "Storage Notes / Observations", type: "textarea", placeholder: "Describe storage arrangement, aisle widths, se…" },
+    ],
+  },
+
+    {
+    id: "dust",
+    label: "Dust & Housekeeping",
+    icon: "🌫️",
+    description: "Plastic dust, regrind, flash, and combustible waste management",
+    questions: [
+      {
+        id: "d_dust_present", label: "Is combustible plastic dust generated during operations?",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "d_dust_collector", label: "Dust Collection System",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "d_dust_hazard_analysis", label: "Has a Dust Hazard Analysis (DHA) been completed per NFPA 652?",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "d_regrind", label: "Plastic regrind / scrap / flash management",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "d_waste_disposal", label: "Frequency of Combustible Waste Removal (plastic scrap, packaging, etc.)",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "d_hk_program", label: "Is there a written housekeeping inspection program with documented audits?",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      { id: "d_notes", label: "Dust / Housekeeping Notes", type: "textarea", placeholder: "Describe dust accumulation observed, areas of …" },
+    ],
+  },
+
+    {
+    id: "utilities",
+    label: "Utilities",
+    icon: "⚡",
+    description: "Electrical, heating, compressed air, and utility systems",
+    questions: [
+      {
+        id: "u_electrical_age", label: "Age / Condition of Main Electrical Service and Distribution",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "u_infrared", label: "Infrared (IR) thermography on electrical equipment",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "u_heating_type", label: "Primary Space Heating System",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "u_compressor", label: "Compressed Air System – Compressor Type and Condition",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "u_emergency_power", label: "Emergency / Backup Power",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "u_arc_flash", label: "Arc Flash Hazard Analysis completed?",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      { id: "u_notes", label: "Utilities Notes / Observations", type: "textarea", placeholder: "Note any electrical deficiencies, utility conc…" },
+    ],
+  },
+
+    {
+    id: "protection",
+    label: "Protection",
+    icon: "🛡️",
+    description: "Fire suppression, detection, alarms, and emergency response",
+    questions: [
+      {
+        id: "pr_sprinkler", label: "Automatic Sprinkler System",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "pr_sprinkler_design", label: "Sprinkler System Design Basis / Adequacy for Current Occupancy",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "pr_sprinkler_inspect", label: "Sprinkler System Inspection / Testing Compliance (NFPA 25)",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "pr_alarm", label: "Fire Alarm / Detection System",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "pr_suppression_special", label: "Special Hazard Suppression Systems (dust collectors, paint booths, etc.)",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "pr_fire_dept", label: "Distance to Nearest Responding Fire Station",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "pr_ppc", label: "ISO Public Protection Classification (PPC)",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "pr_water_supply", label: "Private Fire Water Supply (on-site fire pump, tank, or yard mains)",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "pr_extinguishers", label: "Portable Fire Extinguishers",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "pr_emergency_plan", label: "Emergency Action / Fire Response Plan",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      { id: "pr_notes", label: "Protection Notes / Observations", type: "textarea", placeholder: "Describe any deficiencies, impairments, recent…" },
+    ],
+  },
+
+    {
+    id: "water_supply",
+    label: "Water Supply",
+    icon: "💧",
+    description: "Sprinkler water supply analysis — flow test data and system demand",
+    noScore: true,
+    questions: [
+      {
+        id: "ws_system_type", label: "Sprinkler System Type",
+        type: "select", options: [
+          { label: "Select...", value: "" },
+          { label: "CMDA – Control Mode Density / Area", value: "cmda" },
+          { label: "CMSA – Control Mode Specific Application", value: "cmsa" },
+          { label: "ESFR – Early Suppression Fast Response", value: "esfr" },
+        ],
+      },
+      {
+        id: "ws_supply_type", label: "Primary Water Supply Source",
+        type: "select", options: [
+          { label: "Select...", value: "" },
+          { label: "Fire Pump", value: "fire_pump" },
+          { label: "Hydrant Flow Test", value: "hydrant" },
+          { label: "2\" Drain Test", value: "drain" },
+        ],
+      },
+    ],
+      },
+
+    {
+    id: "exposure",
+    label: "Exposure",
+    icon: "🌍",
+    description: "External, neighboring, and natural hazard exposures",
+    questions: [
+      {
+        id: "ex_neighbor", label: "Exposure from Neighboring Properties",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "ex_flood", label: "FEMA Flood Zone Designation",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "ex_wind", label: "Wind / Hurricane Exposure",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "ex_seismic", label: "Seismic Hazard Zone",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "ex_wildfire", label: "Wildfire / Wildland-Urban Interface (WUI) Exposure",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      {
+        id: "ex_crime", label: "Arson / Vandalism / Security Exposure",
+        type: "select", options: [ {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+          {label:"",value:"",points:},
+        ],
+      },
+      { id: "ex_notes", label: "Exposure Notes / Observations", type: "textarea", placeholder: "Describe neighboring properties, geographic ha…" },
+    ],
+  },
+
+    {
+    id: "recommendations",
+    label: "Recommendations",
+    icon: "📝",
+    description: "Formal recommendations and required vs. suggested actions",
+    noScore: true,
+    questions: [
+      { id: "rec_required", label: "Required Recommendations (must complete within specified timeframe)", type: "textarea", placeholder: "List each required recommendation on a new lin…" },
+      { id: "rec_suggested", label: "Suggested Improvements (best practice – not mandatory)", type: "textarea", placeholder: "List suggested improvements. Example:\n1. Cons…" },
+      { id: "rec_commendations", label: "Commendations / Positive Observations", type: "textarea", placeholder: "Note any risk control strengths, best practice…" },
+      { id: "rec_followup", label: "Follow-Up Requirements / Next Survey Date", type: "textarea", placeholder: "Specify any follow-up inspection requirements,…" },
+    ],
+  },
+];
+
+const WH_SUPPLEMENT = {
+  groups: [
+    {
+      id:"wh_basics", label:"Facility & Inspection Basics",
+      questions:[
+        {id:"wh_address",label:"Warehouse ID / Address",type:"text",placeholder:"Building ID or address"},
+        {id:"wh_const_type",label:"Construction Type",type:"select",options:[
+          {label:"Select...",value:""},{label:"Fire-Resistive",value:"fr"},{label:"",value:""},{label:"Ordinary (Joisted Masonry)",value:"ordinary"},{label:"",value:""},{label:"Wood Frame",value:"wood_frame"},{label:"",value:""},]},
+        {id:"wh_storage_sqft",label:"Total Storage Area",type:"number",placeholder:"e.g. 50000",unit:"sq ft"},
+        {id:"wh_storage_bays",label:"Number of Storage Levels / Bays",type:"number",placeholder:"e.g. 3",unit:"levels"},
+      ],
+    },
+    {
+      id:"wh_heights", label:"Building Heights & Clearances",
+      questions:[
+        {id:"wh_ceiling_ht",label:"Ceiling Height — floor to deck",type:"number",placeholder:"e.g. 30",unit:"ft"},
+        {id:"wh_storage_ht",label:"Maximum Storage Height",type:"number",placeholder:"e.g. 24",unit:"ft"},
+        {id:"wh_clearance",label:"Clearance — top of storage to sprinklers",type:"number",placeholder:"e.g. 18",unit:"in"},
+        {id:"wh_aisle_width",label:"Minimum Aisle Width",type:"number",placeholder:"e.g. 8",unit:"ft"},
+        {id:"wh_obstructions",label:"Obstructions to Ceiling Sprinklers",type:"select",options:[
+          {label:"Select...",value:""},{label:"None",value:"none"},{label:"",value:""},]},
+        {id:"wh_obstructions_desc",label:"Describe Obstructions",type:"textarea",placeholder:"Type, location, and extent of obstructions…"},
+      ],
+    },
+    {
+      id:"wh_rack", label:"Rack & Storage Configuration",
+      questions:[
+        {id:"wh_rack_types",label:"Rack Type(s) Present",type:"multicheck",options:[
+          {label:"",value:""},{label:"",value:""},{label:"",value:""},{label:"",value:""},{label:"",value:""},{label:"",value:""},{label:"",value:""},]},
+        {id:"wh_solid_shelves",label:"Solid Shelves",type:"select",options:[
+          {label:"Select...",value:""},{label:"None",value:"none"},{label:"Slatted / wire only",value:"slatted"},{label:"",value:""},]},
+        {id:"wh_shelf_levels",label:"Number of Solid Shelf Levels",type:"number",placeholder:"e.g. 3",unit:"levels"},
+        {id:"wh_flue_long",label:"Longitudinal Flue Space Between Racks",type:"number",placeholder:"e.g. 6",unit:"in"},
+        {id:"wh_flue_trans",label:"Transverse Flue Space Within Rack",type:"number",placeholder:"e.g. 3",unit:"in"},
+        {id:"wh_rack_damage",label:"Rack Condition / Damage / Modifications",type:"textarea",placeholder:"Describe damage, unauthorized modifications, or missing column guards…"},
+      ],
+    },
+    {
+      id:"wh_commodity", label:"Commodity Details",
+      questions:[
+        {id:"wh_commodity_desc",label:"Primary Commodities Stored (include packaging)",type:"textarea",placeholder:"e.g. Cartoned polyethylene pellets on wood pallets, stretch-wrapped…"},
+        {id:"wh_commodity_class",label:"Commodity Class — Highest Hazard Present",type:"select",options:[
+          {label:"Select...",value:""},{label:"Class I",value:"class1"},{label:"",value:""},{label:"Class III",value:"class3"},{label:"",value:""},{label:"Cartoned Group A Plastic",value:"group_a_cartoned"},{label:"",value:""},{label:"",value:""},]},
+        {id:"wh_packaging",label:"Packaging Type(s) Present",type:"multicheck",options:[
+          {label:"Cartoned",value:"cartoned"},{label:"",value:""},{label:"",value:""},{label:"Expanded plastic",value:"expanded_plastic"},{label:"",value:""},{label:"Wood crates",value:"wood_crates"},{label:"",value:""},]},
+        {id:"wh_mixed",label:"Mixed Commodities Present?",type:"select",options:[
+          {label:"Select...",value:""},{label:"No",value:"no"},{label:"",value:""},]},
+        {id:"wh_mixed_desc",label:"Describe Mixed Commodity / Highest-Hazard Location",type:"textarea",placeholder:"Location, commodity type, approximate quantity…"},
+        {id:"wh_special",label:"Special Commodities Present",type:"multicheck",options:[
+          {label:"Flammable / combustible liquids",value:"flam_liquid"},{label:"",value:""},{label:"Rubber tires",value:"tires"},{label:"",value:""},{label:"Idle pallets — wood or plastic",value:"idle_pallets"},{label:"",value:""},]},
+        {id:"wh_flam_qty",label:"Flammable / Combustible Liquid Max Quantity On-Site",type:"number",placeholder:"e.g. 500",unit:"gal"},
+      ],
+    },
+    {
+      id:"wh_sprinkler", label:"Sprinkler System Protection",
+      questions:[
+        {id:"wh_spr_type",label:"Ceiling Sprinkler System Type",type:"select",options:[
+          {label:"Select...",value:""},{label:"Wet pipe",value:"wet"},{label:"",value:""},{label:"Pre-action",value:"preaction"},{label:"Deluge",value:"deluge"},{label:"",value:""},]},
+        {id:"wh_spr_design",label:"Ceiling Sprinkler Design Basis",type:"select",options:[
+          {label:"Select...",value:""},{label:"ESFR",value:"esfr"},{label:"",value:""},{label:"CMSA",value:"cmsa"},{label:"Standard spray",value:"standard"},{label:"",value:""},]},
+        {id:"wh_spr_kfactor",label:"Sprinkler K-Factor",type:"text",placeholder:"e.g. 14.0"},
+        {id:"wh_spr_temp",label:"Temperature Rating (°F)",type:"text",placeholder:"e.g. 165°F"},
+        {id:"wh_inrack",label:"In-Rack Sprinklers",type:"select",options:[
+          {label:"Select...",value:""},{label:"None",value:"none"},{label:"",value:""},]},
+        {id:"wh_inrack_levels",label:"Number of In-Rack Sprinkler Levels",type:"number",placeholder:"e.g. 2",unit:"levels"},
+        {id:"wh_inrack_kfactor",label:"In-Rack Sprinkler K-Factor",type:"text",placeholder:"e.g. 5.6"},
+        {id:"wh_density",label:"Hydraulic Design Density",type:"text",placeholder:"e.g. 0.30 gpm/ft²"},
+        {id:"wh_design_area",label:"Design Area",type:"number",placeholder:"e.g. 2000",unit:"sq ft"},
+        {id:"wh_flow_date",label:"Last Flow Test Date",type:"text",placeholder:"MM/DD/YYYY"},
+        {id:"wh_static",label:"Static Pressure",type:"number",placeholder:"e.g. 80",unit:"psi"},
+        {id:"wh_residual",label:"Residual Pressure",type:"number",placeholder:"e.g. 65",unit:"psi"},
+        {id:"wh_flow_gpm",label:"Flow at Residual",type:"number",placeholder:"e.g. 1500",unit:"gpm"},
+        {id:"wh_spr_defic",label:"Sprinkler Obstructions / Deficiencies Noted",type:"textarea",placeholder:"Describe any deficiencies, obstructions, or impairments…"},
+      ],
+    },
+    {
+      id:"wh_addl", label:"Additional Fire Protection Features",
+      questions:[
+        {id:"wh_smoke_vents",label:"Smoke and heat vents — present, properly sized, and functional",type:"select",options:[
+          {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"",value:""},]},
+        {id:"wh_draft_curtains",label:"Draft curtains — present where required",type:"select",options:[
+          {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"",value:""},]},
+        {id:"wh_fire_walls",label:"Fire walls / fire barriers — present and rated",type:"select",options:[
+          {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"",value:""},]},
+        {id:"wh_fire_wall_rating",label:"Fire Wall / Barrier Hourly Rating",type:"text",placeholder:"e.g. 2-hour"},
+        {id:"wh_fdc",label:"Fire Department Connection (FDC) — present, visible, and unobstructed",type:"select",options:[
+          {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"",value:""},]},
+        {id:"wh_standpipe",label:"Standpipe system — present and tested annually",type:"select",options:[
+          {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"",value:""},]},
+        {id:"wh_extinguishers",label:"Portable fire extinguishers — adequate, properly rated, and current on inspection",type:"select",options:[
+          {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"",value:""},]},
+      ],
+    },
+    {
+      id:"wh_general", label:"General Risk Observations",
+      questions:[
+        {id:"wh_housekeeping",label:"Housekeeping Level",type:"select",options:[
+          {label:"Select...",value:""},{label:"Excellent",value:"excellent"},{label:"",value:""},{label:"Fair",value:"fair"},{label:"",value:""},]},
+        {id:"wh_ignition",label:"Ignition Source Controls (forklifts, battery charging, hot work, electrical panels)",type:"select",options:[
+          {label:"Select...",value:""},{label:"Adequate",value:"adequate"},{label:"",value:""},]},
+        {id:"wh_ignition_notes",label:"Describe Ignition Control Deficiencies",type:"textarea",placeholder:"Forklift charging areas, hot work controls, electrical panel access…"},
+        {id:"wh_recent_changes",label:"Recent Changes to Storage Layout, Commodities, or Racks?",type:"select",options:[
+          {label:"Select...",value:""},{label:"No",value:"no"},{label:"",value:""},]},
+        {id:"wh_changes_desc",label:"Describe Recent Changes",type:"textarea",placeholder:"Changes to storage height, commodity, rack configuration, or occupancy since last survey…"},
+      ],
+    },
+  ],
+};
+
+function calcSectionScore(section, answers) {
+  if (section.noScore) return null;
+  let earned = 0, possible = 0;
+  section.questions.forEach((q) => {
+    if (q.type !== "select" && q.type !== "radio") return;
+    const opts = q.options.filter((o) => o.points !== null && o.value !== "");
+    if (!opts.length) return;
+    const max = Math.max(...opts.map((o) => o.points));
+    possible += max;
+    const sel = q.options.find((o) => o.value === answers[q.id]);
+    if (sel?.points != null) earned += sel.points;
+  });
+  return possible > 0 ? { earned, possible, pct: Math.round((earned / possible) * 100) } : null;
+}
+
+function calcOverall(answers) {
+  let earned = 0, possible = 0;
+  SECTIONS.forEach((sec) => {
+    if (sec.noScore) return;
+    const s = calcSectionScore(sec, answers);
+    if (s) { earned += s.earned; possible += s.possible; }
+  });
+  const pct = possible > 0 ? (earned / possible) * 100 : 0;
+  if (pct >= 88) return { grade: "A", label: "Excellent – HPR Quality", color: "#16a34a", bg: "#f0fdf4", pct };
+  if (pct >= 75) return { grade: "B", label: "Good – Above Average", color: "#65a30d", bg: "#f7fee7", pct };
+  if (pct >= 62) return { grade: "C", label: "Average – Improvement Needed", color: "#ca8a04", bg: "#fefce8", pct };
+  if (pct >= 50) return { grade: "D", label: "Below Average – Significant Deficiencies", color: "#ea580c", bg: "#fff7ed", pct };
+  return { grade: "F", label: "Poor – Immediate Action Required", color: "#dc2626", bg: "#fef2f2", pct };
+}
+
+function sectionComplete(section, answers) {
+  return section.questions
+    .filter((q) => q.type === "select" || q.type === "radio")
+    .every((q) => answers[q.id]);
+}
+
+export default function HPRApp() {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [showReport, setShowReport] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const set = (id, val) => setAnswers((p) => ({ ...p, [id]: val }));
+  const result = calcOverall(answers);
+
+  const scoredSections = SECTIONS.filter((s) => !s.noScore);
+  const totalScored = scoredSections.reduce((n, s) => n + s.questions.filter((q) => q.type === "select" || q.type === "radio").length, 0);
+  const answered = Object.keys(answers).filter((k) => {
+    const q = SECTIONS.flatMap((s) => s.questions).find((q) => q.id === k);
+    return q && (q.type === "select" || q.type === "radio") && answers[k];
+  }).length;
+  const pctDone = Math.round((answered / totalScored) * 100);
+
+  if (showReport) return <Report answers={answers} result={result} onBack={() => setShowReport(false)} />;
+
+  return (
+    <div style={S.app}>
+      {/* ── SIDEBAR (desktop) ── */}
+      <aside style={S.sidebar}>
+        <div style={S.sidebarLogo}>
+          <img src={NSR_LOGO} alt="NSR" style={{ width: "100%", maxHeight: 54, objectFit: "contain", padding: "0 8px" }} />
+        </div>
+        <div style={S.sidebarProgress}>
+          <div style={S.spLabel}>Survey Progress</div>
+          <div style={S.spBar}><div style={{ ...S.spFill, width: `${pctDone}%` }} /></div>
+          <div style={S.spPct}>{pctDone}% complete</div>
+        </div>
+        <nav style={S.sidebarNav}>
+          {SECTIONS.map((sec, i) => {
+            const done = sectionComplete(sec, answers);
+            const active = i === activeIdx;
+            const score = calcSectionScore(sec, answers);
+            return (
+              <button key={sec.id} onClick={() => setActiveIdx(i)}
+                style={{ ...S.navItem, ...(active ? S.navItemActive : {}), ...(done && !active ? S.navItemDone : {}) }}>
+                <span style={S.navIcon}>{sec.icon}</span>
+                <span style={S.navLabel}>{sec.label}</span>
+                {done && !active && <span style={S.navCheck}>✓</span>}
+                {score && !active && <span style={{ ...S.navScore, color: scoreColor(score.pct) }}>{score.pct}%</span>}
+              </button>
+            );
+          })}
+        </nav>
+        <button style={S.sidebarReport} onClick={() => setShowReport(true)}>
+          View Report →
+        </button>
+      </aside>
+
+      {/* ── MOBILE HEADER ── */}
+      <div style={S.mobileHeader}>
+        <button style={S.menuBtn} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
+        <div style={S.mobileTitle}>
+          <span style={S.mobileTitleMain}>HPR Risk Control</span>
+          <span style={S.mobileTitleSub}>{SECTIONS[activeIdx].icon} {SECTIONS[activeIdx].label}</span>
+        </div>
+        <button style={S.mobileReport} onClick={() => setShowReport(true)}>Report</button>
+      </div>
+
+      {/* ── MOBILE MENU DRAWER ── */}
+      {menuOpen && (
+        <div style={S.mobileDrawer}>
+          <div style={S.drawerHeader}>
+            <span style={S.drawerTitle}>Sections</span>
+            <button style={S.drawerClose} onClick={() => setMenuOpen(false)}>✕</button>
+          </div>
+          {SECTIONS.map((sec, i) => {
+            const done = sectionComplete(sec, answers);
+            return (
+              <button key={sec.id} onClick={() => { setActiveIdx(i); setMenuOpen(false); }}
+                style={{ ...S.drawerItem, ...(i === activeIdx ? S.drawerItemActive : {}) }}>
+                <span>{sec.icon}</span>
+                <span style={{ flex: 1 }}>{sec.label}</span>
+                {done && <span style={{ color: "#22c55e" }}>✓</span>}
+              </button>
+            );
+          })}
+          <div style={{ padding: 16 }}>
+            <div style={S.spLabel}>Progress: {pctDone}%</div>
+            <div style={S.spBar}><div style={{ ...S.spFill, width: `${pctDone}%` }} /></div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MAIN CONTENT ── */}
+      <main style={S.main}>
+        <SectionView
+          section={SECTIONS[activeIdx]}
+          answers={answers}
+          onChange={set}
+          sectionIdx={activeIdx}
+          totalSections={SECTIONS.length}
+          onPrev={() => setActiveIdx(Math.max(0, activeIdx - 1))}
+          onNext={() => setActiveIdx(Math.min(SECTIONS.length - 1, activeIdx + 1))}
+          onReport={() => setShowReport(true)}
+          score={calcSectionScore(SECTIONS[activeIdx], answers)}
+        />
+      </main>
+    </div>
+  );
+}
+
+function SectionView({ section, answers, onChange, sectionIdx, totalSections, onPrev, onNext, onReport, score }) {
+  return (
+    <div style={S.sectionWrap}>
+      {/* Section header */}
+      <div style={S.secHead}>
+        <div style={S.secHeadLeft}>
+          <span style={S.secHeadIcon}>{section.icon}</span>
+          <div>
+            <h2 style={S.secHeadTitle}>{section.label}</h2>
+            <p style={S.secHeadDesc}>{section.description}</p>
+          </div>
+        </div>
+        {score && (
+          <div style={{ ...S.secScore, color: scoreColor(score.pct) }}>
+            <div style={S.secScoreNum}>{score.pct}%</div>
+            <div style={S.secScoreLbl}>section score</div>
+          </div>
+        )}
+      </div>
+
+      {/* Questions */}
+      <div style={S.questions}>
+        {section.questions.map((q, qi) => (
+          <Question key={q.id} q={q} qi={qi} value={answers[q.id] || ""} onChange={(v) => onChange(q.id, v)} />
+        ))}
+      </div>
+      {/* Warehouse Supplement — nested, appears when wh_present === "yes" */}
+      {section.id === "storage" && answers["wh_present"] === "yes" && (
+        <WarehouseSupplement answers={answers} onChange={onChange} />
+      )}
+      {/* Flammable & Combustible Liquids Supplement */}
+      {section.id === "occupancy" && answers["fl_present"] === "yes" && (
+        <FlammableLiquidsSupplement answers={answers} onChange={onChange} />
+      )}
+      {section.id === "occupancy" && answers["nh3_present"] === "yes" && (
+        <AmmoniaSupplement answers={answers} onChange={onChange} />
+      )}
+      {/* Water Supply Analysis Panel */}
+      {section.id === "water_supply" && (
+        <WaterSupplyPanel answers={answers} onChange={onChange} />
+      )}
+
+      {/* Navigation */}
+      <div style={S.navRow}>
+        {sectionIdx > 0
+          ? <button style={S.btnGhost} onClick={onPrev}>← {SECTIONS[sectionIdx - 1].label}</button>
+          : <div />}
+        <div style={S.navMid}>
+          <span style={S.navStepNum}>{sectionIdx + 1} / {totalSections}</span>
+        </div>
+        {sectionIdx < totalSections - 1
+          ? <button style={S.btnPrimary} onClick={onNext}>{SECTIONS[sectionIdx + 1].label} →</button>
+          : <button style={S.btnSuccess} onClick={onReport}>Generate Report 📋</button>}
+      </div>
+    </div>
+  );
+}
+
+function Question({ q, qi, value, onChange }) {
+  const filled = value && value !== "";
+  const base = { ...S.qCard, ...(filled && q.type === "select" ? S.qCardFilled : {}) };
+
+  return (
+    <div style={base}>
+      <label style={S.qLabel}>
+        {(q.type === "select" || q.type === "radio") && (
+          <span style={{ ...S.qNum, ...(filled ? S.qNumFilled : {}) }}>{qi + 1}</span>
+        )}
+        <span style={S.qText}>{q.label}</span>
+        {q.type !== "select" && q.type !== "radio" && <span style={S.qOptional}>(optional)</span>}
+      </label>
+
+      {q.type === "select" && (
+        <select style={{ ...S.select, ...(filled ? S.selectFilled : {}) }}
+          value={value} onChange={(e) => onChange(e.target.value)}>
+          {q.options.map((o) => (
+            <option key={o.value} value={o.value} disabled={o.value === ""}>{o.label}</option>
+          ))}
+        </select>
+      )}
+
+      {q.type === "text" && (
+        <input style={S.input} type="text" placeholder={q.placeholder || ""}
+          value={value} onChange={(e) => onChange(e.target.value)} />
+      )}
+
+      {q.type === "number" && (
+        <div style={S.inputWrap}>
+          <input style={{ ...S.input, ...S.inputNum }} type="number" placeholder={q.placeholder || ""}
+            value={value} onChange={(e) => onChange(e.target.value)} />
+          {q.unit && <span style={S.inputUnit}>{q.unit}</span>}
+        </div>
+      )}
+
+      {q.type === "textarea" && (
+        <textarea style={S.textarea} placeholder={q.placeholder || ""} rows={4}
+          value={value} onChange={(e) => onChange(e.target.value)} />
+      )}
+    </div>
+  );
+}
+
+function Report({ answers, result, onBack }) {
+  const info = (id) => answers[id] || "—";
+
+  return (
+    <div style={S.reportShell}>
+      {/* Report header */}
+      <div style={S.reportHeader}>
+        <div style={S.reportHeaderInner}>
+          <div style={S.reportHeaderLeft}>
+            <div style={S.reportEyebrow}>HPR PROPERTY RISK CONTROL REPORT</div>
+            <div style={S.reportHeaderTitle}>Plastics Manufacturing Survey</div>
+            <div style={S.reportHeaderMeta}>
+              {info("i_inspector")} &nbsp;|&nbsp; {info("i_title")} &nbsp;|&nbsp; {info("i_date")}
+            </div>
+          </div>
+          <button style={S.backBtn} onClick={onBack}>← Back to Survey</button>
+        </div>
+      </div>
+
+      <div style={S.reportBody}>
+
+        {/* ── COVER BLOCK ── */}
+        <div style={S.coverBlock}>
+          <div style={S.coverLeft}>
+            <div style={S.coverLabel}>INSURED</div>
+            <div style={S.coverValue}>{info("i_insured")}</div>
+            <div style={S.coverLabel} className="mt">LOCATION</div>
+            <div style={S.coverValue}>{info("i_address")}</div>
+            <div style={S.coverValue}>{info("i_city")}</div>
+            <div style={S.coverLabel} className="mt">PURPOSE OF SURVEY</div>
+            <div style={S.coverValue}>{info("i_purpose")}</div>
+            {answers["i_policy"] && <>
+              <div style={S.coverLabel}>POLICY / ACCOUNT NO.</div>
+              <div style={S.coverValue}>{info("i_policy")}</div>
+            </>}
+          </div>
+          <div style={{ ...S.gradeBlock, borderColor: result.color, background: result.bg }}>
+            <div style={{ ...S.gradeLetter, color: result.color }}>{result.grade}</div>
+            <div style={{ ...S.gradeLabel2, color: result.color }}>{result.label}</div>
+            <div style={S.gradeScore}>{Math.round(result.pct)}% overall score</div>
+            <div style={S.gradeBarBg}><div style={{ ...S.gradeBarFill, width: `${result.pct}%`, background: result.color }} /></div>
+          </div>
+        </div>
+
+        {/* ── INTRODUCTION ── */}
+        {answers["i_notes"] && (
+          <ReportSection title="Introduction / General Comments">
+            <p style={S.narrative}>{answers["i_notes"]}</p>
+          </ReportSection>
+        )}
+
+        {/* ── SECTION SCORECARD ── */}
+        <ReportSection title="Risk Quality Scorecard">
+          <div style={S.scorecardGrid}>
+            {SECTIONS.filter((s) => !s.noScore).map((sec) => {
+              const sc = calcSectionScore(sec, answers);
+              if (!sc) return null;
+              const c = scoreColor(sc.pct);
+              return (
+                <div key={sec.id} style={S.scorecardItem}>
+                  <div style={S.scTop}>
+                    <span style={S.scIcon}>{sec.icon}</span>
+                    <span style={S.scName}>{sec.label}</span>
+                    <span style={{ ...S.scPct, color: c }}>{sc.pct}%</span>
+                  </div>
+                  <div style={S.scBar}><div style={{ ...S.scFill, width: `${sc.pct}%`, background: c }} /></div>
+                  <div style={S.scDetail}>{sc.earned} / {sc.possible} pts &nbsp;·&nbsp; <span style={{ color: c, fontWeight: 700 }}>{pctToGrade(sc.pct)}</span></div>
+                </div>
+              );
+            })}
+          </div>
+        </ReportSection>
+
+        {/* ── FINDINGS BY SECTION ── */}
+        {SECTIONS.filter((s) => !s.noScore).map((sec) => (
+          <ReportSection key={sec.id} title={`${sec.icon}  ${sec.label}`}>
+            <FindingsTable section={sec} answers={answers} />
+            {answers[sec.id + "_notes"] && (
+              <div style={S.sectionNarrative}>
+                <span style={S.narrativeLabel}>Notes: </span>{answers[sec.id + "_notes"]}
+              </div>
+            )}
+          </ReportSection>
+        ))}
+
+        {/* ── AUTO RECOMMENDATIONS ── */}
+        <ReportSection title="📋  Risk Control Recommendations">
+          <AutoRecs answers={answers} />
+          {answers["rec_required"] && (
+            <div style={{ marginTop: 16 }}>
+              <div style={S.recHeading}>Required Recommendations</div>
+              <pre style={S.pre}>{answers["rec_required"]}</pre>
+            </div>
+          )}
+          {answers["rec_suggested"] && (
+            <div style={{ marginTop: 16 }}>
+              <div style={S.recHeading}>Suggested Improvements</div>
+              <pre style={S.pre}>{answers["rec_suggested"]}</pre>
+            </div>
+          )}
+          {answers["rec_commendations"] && (
+            <div style={{ marginTop: 16 }}>
+              <div style={S.recHeading}>Commendations</div>
+              <pre style={S.pre}>{answers["rec_commendations"]}</pre>
+            </div>
+          )}
+          {answers["rec_followup"] && (
+            <div style={{ marginTop: 16 }}>
+              <div style={S.recHeading}>Follow-Up Requirements</div>
+              <pre style={S.pre}>{answers["rec_followup"]}</pre>
+            </div>
+          )}
+        </ReportSection>
+
+        <div style={S.reportFooter}>
+          This report was prepared by {info("i_inspector")} on {info("i_date")} and is intended for risk management and underwriting purposes.
+          All observations reflect conditions at the time of survey. This report does not constitute a guarantee of safety or compliance.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReportSection({ title, children }) {
+  return (
+    <div style={S.rSection}>
+      <div style={S.rSectionTitle}>{title}</div>
+      <div style={S.rSectionBody}>{children}</div>
+    </div>
+  );
+}
+
+function FindingsTable({ section, answers }) {
+  const rows = section.questions.filter((q) => q.type === "select" || q.type === "radio");
+  if (!rows.length) return null;
+  return (
+    <table style={S.table}>
+      <thead>
+        <tr>
+          <th style={{ ...S.th, width: "45%" }}>Finding</th>
+          <th style={{ ...S.th, width: "40%" }}>Response</th>
+          <th style={{ ...S.th, width: "15%", textAlign: "center" }}>Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((q) => {
+          const opt = q.options?.find((o) => o.value === answers[q.id]);
+          const maxPts = Math.max(...(q.options || []).filter((o) => o.points != null).map((o) => o.points));
+          const pts = opt?.points ?? null;
+          const flagged = pts !== null && pts <= 2;
+          return (
+            <tr key={q.id} style={flagged ? S.trFlagged : {}}>
+              <td style={S.td}>{q.label}</td>
+              <td style={S.td}>{opt ? opt.label : <span style={{ color: "#94a3b8", fontStyle: "italic" }}>Not answered</span>}</td>
+              <td style={{ ...S.td, textAlign: "center" }}>
+                {pts !== null ? (
+                  <span>
+                    <span style={{ color: flagged ? "#dc2626" : "#16a34a", fontWeight: 700 }}>{pts}</span>
+                    <span style={{ color: "#94a3b8" }}>/{maxPts}</span>
+                    {flagged && " ⚠️"}
+                  </span>
+                ) : "—"}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+function AutoRecs({ answers }) {
+  const recs = [];
+  const a = answers;
+
+    if (["frame","joisted_masonry"].includes(a.c_class)) recs.push({ cat: "Construction", sev: "high", text: "Building is wood frame or joisted masonry construction — the highest-risk construction classes for plastics manufacturing. Evaluate feasibility of fire-resistive upgrades or additional suppression density." });
+  if (["over50","26_50"].includes(a.c_age)) recs.push({ cat: "Construction", sev: "med", text: "Building age suggests potential for outdated electrical, plumbing, and structural systems. Recommend a comprehensive building condition survey by a licensed engineer." });
+  if (a.c_roof_cover === "wood_shingle") recs.push({ cat: "Construction", sev: "high", text: "Wood shingle roofing is a Class C or unrated cover presenting significant fire spread risk. Replace with a Class A rated roofing material." });
+  if (["over20","11_20"].includes(a.c_roof_age)) recs.push({ cat: "Construction", sev: "med", text: "Aging roof covering increases leak, collapse, and fire spread potential. Schedule a professional roof inspection and develop a replacement plan." });
+  if (a.c_fire_walls === "none") recs.push({ cat: "Construction", sev: "high", text: "No fire walls subdivide this building. For plastics manufacturing, fire wall subdivision is a key HPR feature. Consult with a fire protection engineer regarding feasibility." });
+
+    if (a.ph_overtemp === "none") recs.push({ cat: "Process Hazards", sev: "high", text: "No automatic over-temperature controls on processing equipment. Thermal runaway is a leading cause of plastics fires. Install high-limit controls with automatic shutoff on all barrel heaters." });
+  if (a.ph_hydraulic === "standard_oil" || a.ph_hydraulic === "old_no_frf") recs.push({ cat: "Process Hazards", sev: "high", text: "Hydraulic equipment using standard petroleum-based oil presents a significant ignition source. Convert to FM-approved fire-resistant hydraulic fluid (FRHF) on all presses." });
+  if (a.ph_static === "none") recs.push({ cat: "Process Hazards", sev: "med", text: "No static electricity controls for resin handling. Implement bonding and grounding at all pneumatic conveying transfer points per NFPA 77." });
+  if (a.ph_pm === "none" || a.ph_pm === "informal") recs.push({ cat: "Process Hazards", sev: "med", text: "No formal preventive maintenance program. Implement a documented PM schedule for all production equipment, focusing on heat transfer systems, hydraulics, and electrical connections." });
+
+    if (a.st_rack_type === "rack_no_inrack") recs.push({ cat: "Storage", sev: "high", text: "High-piled rack storage of plastics without in-rack sprinklers is a critical deficiency. Consult a fire protection engineer to evaluate the need for in-rack sprinkler protection per NFPA 13." });
+  if (["over500k","100k_500k"].includes(a.st_raw_qty)) recs.push({ cat: "Storage", sev: "med", text: "Large raw resin inventory on-site increases maximum probable loss. Evaluate inventory reduction strategies and ensure storage area is properly protected." });
+
+    if (a.d_dust_present === "significant" && a.d_dust_collector === "none") recs.push({ cat: "Dust & Housekeeping", sev: "high", text: "Combustible plastic dust is generated but no dust collection system is in place. Install a dust collection system with explosion venting or suppression per NFPA 652/654." });
+  if (a.d_dust_hazard_analysis === "none" && a.d_dust_present !== "none") recs.push({ cat: "Dust & Housekeeping", sev: "high", text: "No Dust Hazard Analysis (DHA) has been performed. NFPA 652 requires a DHA for all facilities generating combustible dust. Engage a qualified engineer to complete a DHA." });
+  if (a.d_hk_program === "none" || a.d_hk_program === "informal") recs.push({ cat: "Dust & Housekeeping", sev: "med", text: "No formal housekeeping program. Plastic regrind and flash are significant fire fuels. Implement a written housekeeping inspection program with documented audits at least monthly." });
+
+    if (a.u_infrared === "never") recs.push({ cat: "Utilities", sev: "med", text: "Infrared thermography has never been performed on electrical equipment. Electrical failure is a top cause of industrial fires. Implement an annual IR survey program." });
+  if (a.u_heating_type === "direct_fired") recs.push({ cat: "Utilities", sev: "high", text: "Direct-fired unit heaters with open flames in the production area present a significant ignition source for plastic resins and vapors. Convert to indirect-fired or steam/hot water heating." });
+  if (a.u_arc_flash === "none") recs.push({ cat: "Utilities", sev: "med", text: "No arc flash hazard analysis performed. Complete an NFPA 70E-compliant arc flash study and label all electrical panels with appropriate PPE category labels." });
+
+    if (a.pr_sprinkler === "none") recs.push({ cat: "Protection", sev: "high", text: "CRITICAL: No automatic sprinkler system. For a plastics manufacturing facility, this is the single most significant deficiency. Installing a full sprinkler system to NFPA 13 is strongly required." });
+  if (a.pr_sprinkler === "partial") recs.push({ cat: "Protection", sev: "high", text: "Sprinkler coverage is partial. Extend automatic sprinkler protection to all areas of the building including storage areas, offices, and any unprotected spaces." });
+  if (a.pr_sprinkler_design === "outdated" || a.pr_sprinkler_design === "unknown") recs.push({ cat: "Protection", sev: "high", text: "Sprinkler system design basis is unknown or pre-dates current occupancy. Commission a hydraulic analysis to verify the system is adequate for the current plastics commodity and storage arrangement." });
+  if (a.pr_alarm === "none" || a.pr_alarm === "local") recs.push({ cat: "Protection", sev: "high", text: "No central-station monitored fire alarm. Install or upgrade to a UL-listed, central-station monitored fire alarm system to ensure rapid fire department notification." });
+  if (a.pr_hot_work === "none" && a.o_hot_work === "none") recs.push({ cat: "Protection", sev: "high", text: "No Hot Work Permit Program. Implement a formal hot work program per NFPA 51B with written permits, fire watch requirements, and area preparation guidelines." });
+
+    if (a.ex_flood === "high") recs.push({ cat: "Exposure", sev: "med", text: "Property is in a high-risk flood zone. Obtain a flood elevation certificate and review drainage, flood barriers, and critical equipment elevation." });
+  if (a.ex_wildfire === "high") recs.push({ cat: "Exposure", sev: "med", text: "Property is in a wildland-urban interface (WUI) zone. Implement defensible space program, install ember-resistant vents, and review roof and exterior construction." });
+
+  if (!recs.length) return <p style={{ color: "#16a34a", fontWeight: 600 }}>✅ No critical auto-generated recommendations — review findings above for any areas scoring below 3/4 or 3/5.</p>;
+
+  const high = recs.filter((r) => r.sev === "high");
+  const med = recs.filter((r) => r.sev === "med");
+
+  return (
+    <div>
+      {high.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ ...S.recHeading, color: "#dc2626" }}>⛔ Required — High Priority ({high.length})</div>
+          {high.map((r, i) => <div key={i} style={{ ...S.recItem, borderLeft: "4px solid #dc2626" }}><strong>[{r.cat}]</strong> {r.text}</div>)}
+        </div>
+      )}
+      {med.length > 0 && (
+        <div>
+          <div style={{ ...S.recHeading, color: "#ca8a04" }}>⚠️ Suggested — Medium Priority ({med.length})</div>
+          {med.map((r, i) => <div key={i} style={{ ...S.recItem, borderLeft: "4px solid #ca8a04" }}><strong>[{r.cat}]</strong> {r.text}</div>)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function scoreColor(pct) {
+  if (pct >= 88) return "#16a34a";
+  if (pct >= 75) return "#65a30d";
+  if (pct >= 62) return "#ca8a04";
+  if (pct >= 50) return "#ea580c";
+  return "#dc2626";
+}
+function pctToGrade(pct) {
+  if (pct >= 88) return "A";
+  if (pct >= 75) return "B";
+  if (pct >= 62) return "C";
+  if (pct >= 50) return "D";
+  return "F";
+}
+
+function MultiCheck({ options, value = [], onChange }) {
+  const toggle = (v) => {
+    const cur = Array.isArray(value) ? value : [];
+    const next = cur.includes(v) ? cur.filter(x => x !== v) : [...cur, v];
+    onChange(next);
+  };
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+      {options.map(opt => {
+        const checked = Array.isArray(value) && value.includes(opt.value);
+        return (
+          <button key={opt.value} onClick={() => toggle(opt.value)}
+            style={{
+              padding: "6px 14px", borderRadius: 6, fontSize: 12, fontFamily:SERIF,
+              border: checked ? "2px solid #0C1A2E" : "2px solid #e2e8f0",
+              background: checked ? "#0C1A2E" : "#f8fafc",
+              color: checked ? "#C9A84C" : "#475569",
+              cursor: "pointer", fontWeight: checked ? 700 : 400,
+              transition: "all 0.15s",
+            }}>
+            {checked ? "✓ " : ""}{opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function WarehouseSupplement({ answers, onChange }) {
+  const NAVY = "#0C1A2E";
+  const GOLD = "#C9A84C";
+
+  return (
+    <div style={{ marginTop: 24 }}>
+      {/* Header banner */}
+      <div style={{
+        background: NAVY, color: "#f8fafc", borderRadius: "10px 10px 0 0",
+        padding: "14px 20px", display: "flex", alignItems: "center", gap: 12
+      }}>
+        <span style={{ fontSize: 22 }}>🏭</span>
+        <div>
+          <div style={{ fontSize: 11, letterSpacing: 2, color: GOLD, fontFamily:MONO, marginBottom: 2 }}>NSR SUPPLEMENT</div>
+          <div style={{ fontSize: 16, fontWeight: 700, fontFamily:SERIF }}>Warehouse Storage Supplement</div>
+        </div>
+        <div style={{ marginLeft: "auto", fontSize: 11, color: "#94a3b8", fontFamily:MONO }}>
+          NFPA 13 / FM 8-9 Reference
+        </div>
+      </div>
+
+      {WH_SUPPLEMENT.groups.map((group, gi) => (
+        <div key={group.id} style={{
+          border: "1px solid #e2e8f0", borderTop: "none",
+          borderRadius: gi === WH_SUPPLEMENT.groups.length - 1 ? "0 0 10px 10px" : 0,
+          background: "#fff", overflow: "hidden"
+        }}>
+          {/* Group label */}
+          <div style={{
+            padding: "10px 20px", background: "#f1f5f9",
+            fontSize: 12, fontWeight: 700, color: NAVY,
+            letterSpacing: 0.5, borderBottom: "1px solid #e2e8f0",
+            fontFamily:MONO,
+          }}>
+            {gi + 1}. {group.label.toUpperCase()}
+          </div>
+
+          {/* Group questions */}
+          <div style={{ padding: "8px 20px 16px" }}>
+            {group.questions.map((q) => {
+              const val = answers[q.id] || (q.type === "multicheck" ? [] : "");
+              return (
+                <div key={q.id} style={{
+                  padding: "12px 0", borderBottom: "1px solid #f1f5f9",
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#334155", marginBottom: 8, fontFamily:SERIF }}>
+                    {q.label}
+                  </div>
+
+                  {q.type === "select" && (
+                    <select style={{
+                      width: "100%", padding: "9px 12px", fontSize: 13,
+                      border: "2px solid " + (val ? NAVY : "#e2e8f0"),
+                      borderRadius: 7, background: val ? "#fffbf0" : "#f8fafc",
+                      color: val ? "#1e293b" : "#64748b",
+                      fontFamily:SERIF, appearance: "auto",
+                    }} value={val} onChange={e => onChange(q.id, e.target.value)}>
+                      {q.options.map(o => <option key={o.value} value={o.value} disabled={o.value === ""}>{o.label}</option>)}
+                    </select>
+                  )}
+
+                  {q.type === "multicheck" && (
+                    <MultiCheck options={q.options} value={val} onChange={v => onChange(q.id, v)} />
+                  )}
+
+                  {q.type === "text" && (
+                    <input style={{
+                      width: "100%", padding: "9px 12px", fontSize: 13,
+                      border: "2px solid #e2e8f0", borderRadius: 7,
+                      background: "#f8fafc", color: "#1e293b",
+                      fontFamily:SERIF, boxSizing: "border-box",
+                    }} type="text" placeholder={q.placeholder || ""} value={val} onChange={e => onChange(q.id, e.target.value)} />
+                  )}
+
+                  {q.type === "number" && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <input style={{
+                        maxWidth: 160, padding: "9px 12px", fontSize: 13,
+                        border: "2px solid #e2e8f0", borderRadius: 7,
+                        background: "#f8fafc", color: "#1e293b",
+                        fontFamily:SERIF,
+                      }} type="number" placeholder={q.placeholder || ""} value={val} onChange={e => onChange(q.id, e.target.value)} />
+                      {q.unit && <span style={{ fontSize: 13, color: "#64748b" }}>{q.unit}</span>}
+                    </div>
+                  )}
+
+                  {q.type === "textarea" && (
+                    <textarea style={{
+                      width: "100%", padding: "9px 12px", fontSize: 13,
+                      border: "2px solid #e2e8f0", borderRadius: 7,
+                      background: "#f8fafc", color: "#1e293b",
+                      fontFamily:SERIF, resize: "vertical",
+                      boxSizing: "border-box", lineHeight: 1.6,
+                    }} rows={3} placeholder={q.placeholder || ""} value={val} onChange={e => onChange(q.id, e.target.value)} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const NH3_SECTIONS = [
+  { id:"overview", label:"System Overview", fields:[
+    {id:"nh3_status", label:"System Status", type:"select", options:[
+      {label:"Select...",value:""},{label:"In Service",value:"in_service"},{label:"Out of Service",value:"out_service"},{label:"Partial",value:"partial"},]},
+    {id:"nh3_type", label:"System Type", type:"multicheck", options:[
+      {label:"Direct Expansion",value:"dx"},{label:"Flooded",value:"flooded"},{label:"Recirculated",value:"recirc"},{label:"Cascade",value:"cascade"},{label:"Secondary Loop",value:"secondary"},]},
+    {id:"nh3_stages", label:"Compression Stages", type:"select", options:[
+      {label:"Select...",value:""},{label:"Single-Stage",value:"single"},{label:"Two-Stage",value:"two"},{label:"Booster",value:"booster"},]},
+    {id:"nh3_charge_lbs", label:"Total NH₃ Charge", type:"number", placeholder:"e.g. 15000", unit:"lbs"},
+    {id:"nh3_areas_served", label:"Areas Served", type:"text", placeholder:"e.g. Cold storage, processing, blast freezer"},
+    {id:"nh3_charge_cat", label:"Charge Category", type:"select", options:[
+      {label:"Select...",value:""},{label:"< 10,000 lb",value:"under10k"},{label:"10,000 – 19,999 lb",value:"10k_20k"},{label:"≥ 20,000 lb",value:"over20k"},]},
+  ]},
+  { id:"regulatory", label:"Regulatory Applicability", fields:[
+    {id:"nh3_osha_psm", label:"OSHA PSM (29 CFR 1910.119) — ≥ 10,000 lb threshold", type:"select", options:[
+      {label:"Select...",value:""},{label:"Applicable",value:"yes"},{label:"Not Applicable",value:"no"},{label:"Unknown",value:"unknown"},]},
+    {id:"nh3_epa_rmp", label:"EPA RMP (40 CFR 68) Program Level", type:"select", options:[
+      {label:"Select...",value:""},{label:"Program 1",value:"prog1"},{label:"Program 2",value:"prog2"},{label:"Program 3",value:"prog3"},{label:"Not Applicable",value:"no"},]},
+    {id:"nh3_iiar2", label:"IIAR-2 (Design) Compliance", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Partial",value:"partial"},{label:"Unknown",value:"unknown"},]},
+    {id:"nh3_iiar6", label:"IIAR-6 Mechanical Integrity Inspections Current", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Unknown",value:"unknown"},]},
+    {id:"nh3_pha_date", label:"Date of Most Recent PHA / PHA Revalidation (≤ 5 yrs required under PSM)", type:"text", placeholder:"MM/DD/YYYY"},
+    {id:"nh3_rmp_date", label:"Date of Most Recent RMP Submission", type:"text", placeholder:"MM/DD/YYYY"},
+  ]},
+  { id:"engine_room", label:"Engine Room / Machinery Room", fields:[
+    {id:"nh3_er_count", label:"Number of Engine Rooms", type:"number", placeholder:"e.g. 1", unit:"rooms"},
+    {id:"nh3_er_location", label:"Location(s)", type:"text", placeholder:"e.g. North end of building, exterior"},
+    {id:"nh3_er_construction", label:"Room Construction", type:"multicheck", options:[
+      {label:"Fire-Rated",value:"fire_rated"},{label:"Non-Rated",value:"non_rated"},{label:"CMU / Concrete",value:"cmu"},{label:"Metal Panel",value:"metal"},{label:"Other",value:"other"},]},
+    {id:"nh3_er_separation", label:"Separated from Production By", type:"select", options:[
+      {label:"Select...",value:""},{label:"Fire Wall",value:"fire_wall"},{label:"Fire Barrier",value:"fire_barrier"},{label:"Open / No Separation",value:"none"},]},
+    {id:"nh3_er_electrical", label:"Electrical Classification Appropriate (Class I Div 2 or equiv.)", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Mixed",value:"mixed"},{label:"N/A",value:"na"},]},
+    {id:"nh3_er_explosion_venting", label:"Explosion Venting / Pressure Relief Panels on Engine Room", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Not Required per Ventilation Rate",value:"not_req"},]},
+  ]},
+  { id:"compressors", label:"Compressors", fields:[
+    {id:"nh3_comp_count", label:"Number of Compressors", type:"number", placeholder:"e.g. 4", unit:"units"},
+    {id:"nh3_comp_hp", label:"Total HP", type:"number", placeholder:"e.g. 600", unit:"HP"},
+    {id:"nh3_comp_type", label:"Compressor Type", type:"select", options:[
+      {label:"Select...",value:""},{label:"Screw",value:"screw"},{label:"Reciprocating",value:"recip"},{label:"Rotary",value:"rotary"},{label:"Mixed",value:"mixed"},]},
+    {id:"nh3_comp_redundancy", label:"Redundancy", type:"select", options:[
+      {label:"Select...",value:""},{label:"N+1 Available",value:"n_plus_1"},{label:"No Spare Capacity",value:"none"},{label:"Critical Spares On-Site",value:"spares"},]},
+    {id:"nh3_comp_oil", label:"Oil Management / Oil Pots Safely Vented", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"N/A",value:"na"},]},
+  ]},
+  { id:"piping", label:"Ammonia Piping", fields:[
+    {id:"nh3_pipe_material", label:"Piping Material", type:"multicheck", options:[
+      {label:"Seamless",value:"seamless"},{label:"Welded",value:"welded"},{label:"Threaded",value:"threaded"},{label:"Mixed",value:"mixed"},]},
+    {id:"nh3_pipe_schedule", label:"Piping Schedule", type:"select", options:[
+      {label:"Select...",value:""},{label:"Schedule 40",value:"sch40"},{label:"Schedule 80",value:"sch80"},{label:"Mixed",value:"mixed"},{label:"Unknown",value:"unknown"},]},
+    {id:"nh3_pipe_outside_pct", label:"% of Piping Located Outside Building (roof/exterior)", type:"number", placeholder:"e.g. 20", unit:"%"},
+    {id:"nh3_pipe_inside_pct", label:"% of Piping Located Inside Building", type:"number", placeholder:"e.g. 80", unit:"%"},
+    {id:"nh3_pipe_occupied", label:"Piping in Occupied / Production Areas", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Above Suspended Ceiling Only",value:"ceiling"},]},
+    {id:"nh3_pipe_protection", label:"Piping Protected from Physical Damage (bollards, guards)", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Partial",value:"partial"},{label:"N/A",value:"na"},]},
+    {id:"nh3_pipe_insulation", label:"Insulation Condition", type:"select", options:[
+      {label:"Select...",value:""},{label:"Good — vapor barrier intact",value:"good"},{label:"Fair",value:"fair"},{label:"Deteriorated",value:"deteriorated"},]},
+    {id:"nh3_pipe_inspect_date", label:"Date of Most Recent Piping / Vessel Inspection (IIAR-6 / MI)", type:"text", placeholder:"MM/DD/YYYY"},
+  ]},
+  { id:"detection", label:"Ammonia Detection", fields:[
+    {id:"nh3_det_engine_room", label:"Detection in Engine Room", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},]},
+    {id:"nh3_det_other", label:"Detection in Other Areas (process, dock, refrigerated spaces)", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Partial",value:"partial"},]},
+    {id:"nh3_det_warn_ppm", label:"Warning Alarm Setpoint", type:"number", placeholder:"e.g. 25", unit:"ppm"},
+    {id:"nh3_det_vent_ppm", label:"Emergency Vent Activation Setpoint", type:"number", placeholder:"e.g. 150", unit:"ppm"},
+    {id:"nh3_det_shutdown_ppm", label:"Automatic Shutdown Setpoint", type:"number", placeholder:"e.g. 300", unit:"ppm"},
+    {id:"nh3_det_sensors", label:"Number of Sensors", type:"number", placeholder:"e.g. 6", unit:"sensors"},
+    {id:"nh3_det_calibration", label:"Bump Test / Calibration Frequency", type:"select", options:[
+      {label:"Select...",value:""},{label:"Quarterly",value:"quarterly"},{label:"Semiannual",value:"semiannual"},{label:"Annual",value:"annual"},{label:"Not Performed",value:"none"},{label:"Unknown",value:"unknown"},]},
+    {id:"nh3_det_monitoring", label:"Detection Connected to Central Fire Alarm / Monitoring", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Local Only",value:"local"},]},
+  ]},
+  { id:"ventilation", label:"Ventilation", fields:[
+    {id:"nh3_vent_continuous", label:"Continuous Mechanical Ventilation in Engine Room", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},]},
+    {id:"nh3_vent_auto", label:"Emergency Ventilation Auto-Starts on NH₃ Detection", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},]},
+    {id:"nh3_vent_ach", label:"Emergency Vent Rate", type:"number", placeholder:"e.g. 30", unit:"ACH"},
+    {id:"nh3_vent_discharge", label:"Discharge Location", type:"text", placeholder:"e.g. Roof, away from air intakes"},
+    {id:"nh3_vent_backup_power", label:"Emergency Vent Has Independent / Backup Electrical Feed", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Unknown",value:"unknown"},]},
+    {id:"nh3_vent_estop_outside", label:"Ventilation Controls (E-stop) Located Outside Engine Room Exterior Doors", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},]},
+  ]},
+  { id:"emergency_controls", label:"Emergency Controls & Pressure Relief", fields:[
+    {id:"nh3_ec_estop", label:"Emergency Stop (E-stop) Accessible Outside Engine Room", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},]},
+    {id:"nh3_ec_king_valve", label:"King Valve / Emergency Isolation Valve Present and Labeled", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Unknown",value:"unknown"},]},
+    {id:"nh3_ec_prv_piped", label:"Pressure Relief Valves Piped to Atmosphere (per IIAR-2)", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Treated / Diffuser",value:"diffuser"},{label:"Unknown",value:"unknown"},]},
+    {id:"nh3_ec_prv_date", label:"Relief Valve Replacement Date (5-year interval required)", type:"text", placeholder:"MM/DD/YYYY"},
+  ]},
+  { id:"emergency_response", label:"Emergency Response & Training", fields:[
+    {id:"nh3_er_written_plan", label:"Written Ammonia Emergency Response Procedure", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},]},
+    {id:"nh3_er_training", label:"Site Personnel Trained on Ammonia Response", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Partial",value:"partial"},]},
+    {id:"nh3_er_certified_op", label:"Certified / Qualified Operator on Staff (RETA, IIAR, or equiv.)", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},]},
+    {id:"nh3_er_fd_trained", label:"Local FD / Outside Responders Trained on Site Hazards", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Unknown",value:"unknown"},]},
+    {id:"nh3_er_drills", label:"Joint Drills with FD Conducted in Past 12 Months", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},]},
+    {id:"nh3_er_scba", label:"SCBA / Level A or B PPE On-Site", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"FD-Provided Only",value:"fd_only"},]},
+    {id:"nh3_er_eyewash", label:"Eyewash / Safety Shower Near Engine Room", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},]},
+    {id:"nh3_er_placards", label:"NFPA 704 Placards Posted", type:"select", options:[
+      {label:"Select...",value:""},{label:"Yes",value:"yes"},{label:"No",value:"no"},{label:"Partial",value:"partial"},]},
+  ]},
+];
+
+function AmmoniaSupplement({ answers, onChange }) {
+  const NAVY="#0C1A2E"; const GOLD="#C9A84C"; const RED="#dc2626"; const AMBER="#ca8a04"; const GRN="#16a34a";
+
+  // Regulatory flags
+  const charge = parseFloat(answers["nh3_charge_lbs"]) || 0;
+  const psmApplies = charge >= 10000;
+  const rmpApplies = charge >= 10000;
+
+  return (
+    <div style={{marginTop:24}}>
+      {/* Header */}
+      <div style={{background:NAVY,color:"#f8fafc",borderRadius:"10px 10px 0 0",padding:"14px 20px",display:"flex",alignItems:"center",gap:12}}>
+        <span style={{fontSize:22}}>❄️</span>
+        <div>
+          <div style={{fontSize:10,letterSpacing:2,color:GOLD,fontFamily:MONO,marginBottom:2}}>NSR SUPPLEMENT — IIAR / OSHA PSM / EPA RMP</div>
+          <div style={{fontSize:16,fontWeight:700,fontFamily:SERIF}}>Ammonia Refrigeration</div>
+        </div>
+      </div>
+
+      {/* PSM/RMP alert banner */}
+      {psmApplies && (
+        <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderTop:"none",padding:"10px 20px",display:"flex",alignItems:"center",gap:10}}>
+          <span style={{fontSize:18}}>⚠️</span>
+          <div style={{fontSize:12,color:RED,fontWeight:600}}>
+            Charge ≥ 10,000 lbs — OSHA PSM and EPA RMP thresholds apply. Verify regulatory compliance below.
+          </div>
+        </div>
+      )}
+
+      {/* Sections */}
+      {NH3_SECTIONS.map((sec, si) => (
+        <div key={sec.id} style={{background:"#fff",border:"1px solid #e2e8f0",borderTop:"none",
+          borderRadius:si===NH3_SECTIONS.length-1?"0 0 10px 10px":0}}>
+          <div style={{padding:"9px 20px",background:"#f1f5f9",fontSize:11,fontWeight:700,
+            color:NAVY,letterSpacing:1,fontFamily:MONO,borderBottom:"1px solid #e2e8f0"}}>
+            {(si+1).toString().padStart(2,"0")}. {sec.label.toUpperCase()}
+          </div>
+          <div style={{padding:"12px 20px",display:"flex",flexDirection:"column",gap:12}}>
+            {sec.fields.map(f => {
+              const val = answers[f.id] || (f.type==="multicheck"?[]:"");
+              return (
+                <div key={f.id}>
+                  <div style={{fontSize:12,fontWeight:600,color:"#334155",marginBottom:6,fontFamily:SERIF}}>{f.label}</div>
+                  {f.type==="select" && (
+                    <select style={{width:"100%",maxWidth:420,padding:"8px 12px",fontSize:12,
+                      border:"2px solid "+(val?GOLD:"#e2e8f0"),borderRadius:7,
+                      background:val?"#fffbf0":"#f8fafc",color:val?"#1e293b":"#64748b",fontFamily:SERIF}}
+                      value={val} onChange={e=>onChange(f.id,e.target.value)}>
+                      {f.options.map(o=><option key={o.value} value={o.value} disabled={o.value===""?true:undefined}>{o.label}</option>)}
+                    </select>
+                  )}
+                  {f.type==="multicheck" && (
+                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                      {f.options.map(o=>{
+                        const checked=Array.isArray(val)&&val.includes(o.value);
+                        return <button key={o.value} onClick={()=>{
+                          const cur=Array.isArray(val)?val:[];
+                          onChange(f.id,checked?cur.filter(x=>x!==o.value):[...cur,o.value]);
+                        }} style={{padding:"5px 12px",fontSize:11,fontWeight:checked?700:400,
+                          border:checked?"2px solid "+NAVY:"2px solid #e2e8f0",
+                          background:checked?NAVY:"#f8fafc",color:checked?GOLD:"#64748b",
+                          borderRadius:5,cursor:"pointer",fontFamily:SERIF}}>
+                          {checked?"✓ ":""}{o.label}
+                        </button>;
+                      })}
+                    </div>
+                  )}
+                  {f.type==="text" && (
+                    <input type="text" placeholder={f.placeholder||""} value={val}
+                      onChange={e=>onChange(f.id,e.target.value)}
+                      style={{width:"100%",maxWidth:360,padding:"8px 12px",fontSize:12,
+                        border:"2px solid "+(val?GOLD:"#e2e8f0"),borderRadius:7,
+                        background:val?"#fffbf0":"#f8fafc",fontFamily:SERIF,color:"#1e293b"}} />
+                  )}
+                  {f.type==="number" && (
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <input type="number" placeholder={f.placeholder||""} value={val}
+                        onChange={e=>onChange(f.id,e.target.value)}
+                        style={{width:140,padding:"8px 12px",fontSize:12,
+                          border:"2px solid "+(val?GOLD:"#e2e8f0"),borderRadius:7,
+                          background:val?"#fffbf0":"#f8fafc",fontFamily:SERIF,color:"#1e293b"}} />
+                      {f.unit&&<span style={{fontSize:12,color:"#64748b"}}>{f.unit}</span>}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {/* Notes */}
+      <div style={{background:"#fff",border:"1px solid #e2e8f0",borderTop:"none",padding:"16px 20px",borderRadius:"0 0 10px 10px"}}>
+        <div style={{fontSize:12,fontWeight:600,color:NAVY,marginBottom:8,fontFamily:SERIF}}>Ammonia Refrigeration — Consultant Notes / Observations</div>
+        <textarea rows={5} placeholder="Describe overall system condition, key deficiencies, PSM/RMP compliance status, corrective actions discussed…"
+          style={{width:"100%",padding:"9px 12px",fontSize:12,border:"2px solid #e2e8f0",borderRadius:7,
+            background:"#f8fafc",color:"#1e293b",fontFamily:SERIF,resize:"vertical",boxSizing:"border-box",lineHeight:1.6}}
+          value={answers["nh3_notes"]||""} onChange={e=>onChange("nh3_notes",e.target.value)} />
+      </div>
+    </div>
+  );
+}
+
+const FL_CLASSES = [
+  { id: "ia",   label: "Class IA",   cat: "Flammable",    fp: "< 73°F / < 100°F BP",  ex: "Diethyl ether, pentane" },
+  { id: "ib",   label: "Class IB",   cat: "Flammable",    fp: "< 73°F / ≥ 100°F BP",  ex: "Gasoline, acetone, ethanol" },
+  { id: "ic",   label: "Class IC",   cat: "Flammable",    fp: "73–100°F",              ex: "Turpentine, xylene" },
+  { id: "ii",   label: "Class II",   cat: "Combustible",  fp: "100–140°F",             ex: "Diesel, kerosene" },
+  { id: "iiia", label: "Class IIIA", cat: "Combustible",  fp: "140–200°F",             ex: "Fuel oil #2, paint thinners" },
+  { id: "iiib", label: "Class IIIB", cat: "Combustible",  fp: "≥ 200°F",               ex: "Motor oil, vegetable oil" },
+];
+
+const FL_CHECKLIST = {
+  sr: {
+    label: "Storage Room Construction",
+    items: [
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+    ],
+  },
+  storage: {
+    label: "Storage of Flammable & Combustible Liquids",
+    items: [
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+    ],
+  },
+  di: {
+    label: "Dispensing, Transfer & Handling",
+    items: [
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+    ],
+  },
+  ignition: {
+    label: "Ignition Source Control",
+    items: [
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      { id: "fl_ig_hot_work_dist",text: "Hot work not performed within 35 ft of FL/CL unless area is cleared or shielded." },
+      {id:"",text:""},
+      {id:"",text:""},
+    ],
+  },
+  fp: {
+    label: "Fire Protection",
+    items: [
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+    ],
+  },
+  ventilation: {
+    label: "Ventilation",
+    items: [
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+    ],
+  },
+  sc: {
+    label: "Spill Control & Secondary Containment",
+    items: [
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+    ],
+  },
+  housekeeping: {
+    label: "Housekeeping",
+    items: [
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+      {id:"",text:""},
+    ],
+  },
+};
+
+function FlammableLiquidsSupplement({ answers, onChange }) {
+  const NAVY="#0C1A2E"; const GOLD="#C9A84C"; const GRN="#16a34a"; const RED="#dc2626"; const AMBER="#ca8a04";
+
+  const ynaVal = (id) => answers[id] || "";
+  const setYNA = (id, val) => onChange(id, val);
+  const notesVal = (id) => answers[id] || "";
+
+  const YNAButton = ({ id, val }) => {
+    const cur = ynaVal(id);
+    const opts = [{ v:"yes", l:"Yes", c:GRN }, { v:"no", l:"No", c:RED }, { v:"na", l:"N/A", c:"#94a3b8" }];
+    return (
+      <div style={{display:"flex",gap:4}}>
+        {opts.map(o => (
+          <button key={o.v} onClick={() => setYNA(id, o.v)} style={{
+            padding:"3px 10px", fontSize:11, fontWeight:700,
+            border: cur===o.v ? `2px solid ${o.c}` : "2px solid #e2e8f0",
+            background: cur===o.v ? o.c : "#f8fafc",
+            color: cur===o.v ? "#fff" : "#94a3b8",
+            borderRadius:5, cursor:"pointer", fontFamily:"'Calibri',sans-serif",
+            transition:"all 0.12s",
+          }}>{o.l}</button>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{marginTop:24}}>
+      {/* Header */}
+      <div style={{background:NAVY,color:"#f8fafc",borderRadius:"10px 10px 0 0",padding:"14px 20px",display:"flex",alignItems:"center",gap:12}}>
+        <span style={{fontSize:22}}>🔥</span>
+        <div>
+          <div style={{fontSize:10,letterSpacing:2,color:GOLD,fontFamily:MONO,marginBottom:2}}>NSR SUPPLEMENT — NFPA 30</div>
+          <div style={{fontSize:16,fontWeight:700,fontFamily:SERIF}}>Flammable & Combustible Liquids</div>
+        </div>
+      </div>
+
+      {/* NFPA 30 Reference Table */}
+      <div style={{background:"#fff",border:"1px solid #e2e8f0",borderTop:"none",padding:"16px 20px"}}>
+        <div style={{fontSize:11,fontWeight:700,color:NAVY,marginBottom:10,fontFamily:MONO,letterSpacing:1}}>NFPA 30 CLASSIFICATION REFERENCE</div>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+          <thead><tr style={{background:NAVY}}>
+            {["Class","Category","Flash Point","Examples"].map(h=><th key={h} style={{padding:"6px 10px",color:"#f8fafc",textAlign:"left",fontWeight:600}}>{h}</th>)}
+          </tr></thead>
+          <tbody>
+            {FL_CLASSES.map((c,i)=>(
+              <tr key={c.id} style={{background:i%2===0?"#f8fafc":"#fff"}}>
+                <td style={{padding:"5px 10px",fontWeight:700,color:c.cat==="Flammable"?RED:AMBER}}>{c.label}</td>
+                <td style={{padding:"5px 10px",color:c.cat==="Flammable"?RED:AMBER,fontWeight:600}}>{c.cat}</td>
+                <td style={{padding:"5px 10px",color:"#475569"}}>{c.fp}</td>
+                <td style={{padding:"5px 10px",color:"#475569",fontStyle:"italic"}}>{c.ex}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Inventory Table */}
+      <div style={{background:"#fff",border:"1px solid #e2e8f0",borderTop:"none",padding:"16px 20px"}}>
+        <div style={{fontSize:11,fontWeight:700,color:NAVY,marginBottom:12,fontFamily:MONO,letterSpacing:1}}>LIQUID INVENTORY — MAXIMUM QUANTITIES ON-SITE</div>
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:560}}>
+            <thead><tr style={{background:"#f1f5f9"}}>
+              {["Class","Container Storage (gal)","Bulk / Tank Storage (gal)","In-Process Use (gal/day)","Typical Products"].map(h=>(
+                <th key={h} style={{padding:"7px 10px",textAlign:"left",fontWeight:700,color:NAVY,borderBottom:"2px solid #e2e8f0",whiteSpace:"nowrap"}}>{h}</th>
+              ))}
+            </tr></thead>
+            <tbody>
+              {FL_CLASSES.map((c,i)=>(
+                <tr key={c.id} style={{background:i%2===0?"#f8fafc":"#fff"}}>
+                  <td style={{padding:"5px 10px",fontWeight:700,color:c.cat==="Flammable"?RED:AMBER}}>{c.label}</td>
+                  {["container","bulk","process"].map(t=>(
+                    <td key={t} style={{padding:"4px 8px"}}>
+                      <input type="number" placeholder="0"
+                        style={{width:"100%",padding:"5px 8px",fontSize:12,border:"1px solid #e2e8f0",borderRadius:5,background:"#fff",fontFamily:SERIF}}
+                        value={answers[`fl_inv_${c.id}_${t}`]||""} onChange={e=>onChange(`fl_inv_${c.id}_${t}`,e.target.value)} />
+                    </td>
+                  ))}
+                  <td style={{padding:"4px 8px"}}>
+                    <input type="text" placeholder={c.ex}
+                      style={{width:"100%",padding:"5px 8px",fontSize:11,border:"1px solid #e2e8f0",borderRadius:5,background:"#fff",fontFamily:SERIF,fontStyle:"italic",color:"#64748b"}}
+                      value={answers[`fl_inv_${c.id}_products`]||""} onChange={e=>onChange(`fl_inv_${c.id}_products`,e.target.value)} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Storage Room Dimensions */}
+      <div style={{background:"#fff",border:"1px solid #e2e8f0",borderTop:"none",padding:"16px 20px"}}>
+        <div style={{fontSize:11,fontWeight:700,color:NAVY,marginBottom:12,fontFamily:MONO,letterSpacing:1}}>STORAGE ROOM DIMENSIONS</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          {[
+            ["fl_sr_sqft",       "Storage Room Area",       "e.g. 400",   "sq ft"],
+            ["fl_sr_ceiling",    "Ceiling Height",           "e.g. 12",    "ft"],
+            ["fl_sr_wall_rating","Wall Fire Rating",         "e.g. 2",     "hrs"],
+            ["fl_sr_door_rating","Door Fire Rating",         "e.g. 1.5",   "hrs"],
+            ["fl_sr_wall_const", "Wall Construction",        "e.g. CMU",   ""],
+            ["fl_sr_floor_const","Floor Construction",       "e.g. Concrete",""],
+            ["fl_sr_sill_height","Sill / Ramp Height",       "e.g. 4",     "in"],
+            ["fl_sr_vent_cfm",   "Ventilation Rate",         "e.g. 400",   "CFM"],
+          ].map(([id,label,ph,unit])=>(
+            <div key={id}>
+              <div style={{fontSize:11,fontWeight:600,color:"#475569",marginBottom:4}}>{label}</div>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <input type="text" placeholder={ph}
+                  style={{flex:1,padding:"7px 10px",fontSize:12,border:"2px solid #e2e8f0",borderRadius:6,background:"#f8fafc",fontFamily:SERIF,
+                    borderColor:answers[id]?"#C9A84C":"#e2e8f0"}}
+                  value={answers[id]||""} onChange={e=>onChange(id,e.target.value)} />
+                {unit && <span style={{fontSize:11,color:"#94a3b8",whiteSpace:"nowrap"}}>{unit}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Checklist sections */}
+      {Object.entries(FL_CHECKLIST).map(([key, group]) => (
+        <div key={key} style={{background:"#fff",border:"1px solid #e2e8f0",borderTop:"none"}}>
+          <div style={{padding:"10px 20px",background:"#f1f5f9",fontSize:11,fontWeight:700,color:NAVY,letterSpacing:0.5,fontFamily:MONO,borderBottom:"1px solid #e2e8f0"}}>
+            {group.label.toUpperCase()}
+          </div>
+          <table style={{width:"100%",borderCollapse:"collapse"}}>
+            <thead><tr style={{background:"#fafafa"}}>
+              <th style={{padding:"7px 12px",width:"15%",textAlign:"center",fontSize:11,fontWeight:600,color:"#64748b",borderBottom:"1px solid #e2e8f0"}}>Response</th>
+              <th style={{padding:"7px 12px",width:"55%",textAlign:"left",fontSize:11,fontWeight:600,color:"#64748b",borderBottom:"1px solid #e2e8f0"}}>Inspection Item</th>
+              <th style={{padding:"7px 12px",width:"30%",textAlign:"left",fontSize:11,fontWeight:600,color:"#64748b",borderBottom:"1px solid #e2e8f0"}}>Notes / Comments</th>
+            </tr></thead>
+            <tbody>
+              {group.items.map((item,i)=>(
+                <tr key={item.id} style={{background:i%2===0?"#fff":"#fafafa",borderBottom:"1px solid #f1f5f9"}}>
+                  <td style={{padding:"8px 12px",textAlign:"center",verticalAlign:"middle"}}>
+                    <YNAButton id={item.id} val={ynaVal(item.id)} />
+                  </td>
+                  <td style={{padding:"8px 12px",fontSize:12,color:"#334155",lineHeight:1.5,verticalAlign:"middle"}}>{item.text}</td>
+                  <td style={{padding:"6px 8px",verticalAlign:"middle"}}>
+                    <input type="text" placeholder="Notes…"
+                      style={{width:"100%",padding:"5px 8px",fontSize:11,border:"1px solid #e2e8f0",borderRadius:5,background:"#fff",fontFamily:SERIF,color:"#475569",boxSizing:"border-box"}}
+                      value={notesVal(item.id+"_notes")} onChange={e=>onChange(item.id+"_notes",e.target.value)} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+
+      {/* Overall notes */}
+      <div style={{background:"#fff",border:"1px solid #e2e8f0",borderTop:"none",padding:"16px 20px",borderRadius:"0 0 10px 10px"}}>
+        <div style={{fontSize:12,fontWeight:600,color:NAVY,marginBottom:8,fontFamily:SERIF}}>Flammable & Combustible Liquids — Overall Notes / Observations</div>
+        <textarea style={{width:"100%",padding:"9px 12px",fontSize:13,border:"2px solid #e2e8f0",borderRadius:7,background:"#f8fafc",
+          color:"#1e293b",fontFamily:SERIF,resize:"vertical",boxSizing:"border-box",lineHeight:1.6}}
+          rows={4} placeholder="Describe overall compliance level, key deficiencies, corrective actions discussed, or any unique hazards observed…"
+          value={answers["fl_overall_notes"]||""} onChange={e=>onChange("fl_overall_notes",e.target.value)} />
+      </div>
+    </div>
+  );
+}
+
+function hazenWilliams(staticPsi, residualPsi, flowGpm, targetFlow) {
+  if (!staticPsi || !residualPsi || !flowGpm || flowGpm === 0) return null;
+  const ratio = Math.pow(targetFlow / flowGpm, 1.85);
+  return residualPsi - (staticPsi - residualPsi) * ratio;
+}
+function affinityCorrect(p, testRpm, ratedRpm) {
+  if (!testRpm || !ratedRpm || testRpm === 0) return p;
+  return p * Math.pow(ratedRpm / testRpm, 2);
+}
+function affinityCorrectFlow(q, testRpm, ratedRpm) {
+  if (!testRpm || !ratedRpm || testRpm === 0) return q;
+  return q * (ratedRpm / testRpm);
+}
+function interpPump(pts, q) {
+  const sorted = [...pts].sort((a,b)=>a.flow-b.flow);
+  if (q <= sorted[0].flow) return sorted[0].pressure;
+  if (q >= sorted[sorted.length-1].flow) return Math.max(0, sorted[sorted.length-1].pressure);
+  for (let j=0; j<sorted.length-1; j++) {
+    if (q >= sorted[j].flow && q <= sorted[j+1].flow) {
+      const t = (q - sorted[j].flow)/(sorted[j+1].flow - sorted[j].flow);
+      return sorted[j].pressure + t*(sorted[j+1].pressure - sorted[j].pressure);
+    }
+  }
+}
+function calcWaterSupply(a) {
+  const n = id => parseFloat(a[id]) || 0;
+  const isPump = a["ws_supply_type"] === "fire_pump";
+  const staticPsi = n("ws_static"); const residualPsi = n("ws_residual"); const flowGpm = n("ws_flow_gpm");
+  const demandGpm = n("ws_demand_gpm"); const demandPsi = n("ws_demand_psi"); const hose = n("ws_hose_allowance") || 250;
+  const ratedRpm = n("ws_pump_rated_rpm") || 1770; const ratedFlow = n("ws_pump_rated_flow") || flowGpm; const ratedPsi = n("ws_pump_rated_psi") || staticPsi;
+  let pumpPts = null; let nfpa = null;
+  if (isPump) {
+    const churnNet = n("ws_churn_discharge")-n("ws_churn_suction"); const p100Net = n("ws_100_discharge")-n("ws_100_suction"); const p150Net = n("ws_150_discharge")-n("ws_150_suction");
+    const churnRpm = n("ws_churn_rpm")||ratedRpm; const rpm100 = n("ws_100_rpm")||ratedRpm; const rpm150 = n("ws_150_rpm")||ratedRpm;
+    const cCP = affinityCorrect(churnNet,churnRpm,ratedRpm); const cP100 = affinityCorrect(p100Net,rpm100,ratedRpm); const cP150 = affinityCorrect(p150Net,rpm150,ratedRpm);
+    const cF100 = affinityCorrectFlow(n("ws_100_flow"),rpm100,ratedRpm); const cF150 = affinityCorrectFlow(n("ws_150_flow"),rpm150,ratedRpm);
+    pumpPts = [{flow:0,pressure:cCP},{flow:cF100,pressure:cP100},{flow:cF150,pressure:cP150}];
+    nfpa = { passChurn:cCP<=ratedPsi*1.4, pass100:cP100>=ratedPsi, pass150:cP150>=ratedPsi*0.65, cCP, cP100, cP150, cF100, cF150 };
+  }
+  const maxFlow = Math.max((demandGpm+hose)*1.35, flowGpm*1.2, ratedFlow*1.6, 1000);
+  const STEPS = 30;
+  const merged = [];
+  for (let i=0; i<=STEPS; i++) {
+    const q = (maxFlow/STEPS)*i;
+    const sup = isPump && pumpPts ? interpPump(pumpPts,q) : hazenWilliams(staticPsi,residualPsi,flowGpm,q);
+    const hosePressure = isPump && pumpPts ? interpPump(pumpPts,hose) : hazenWilliams(staticPsi,residualPsi,flowGpm,hose);
+    const supLessHose = sup !== null && hosePressure !== null ? sup - hosePressure : null;
+    const dem = q<=demandGpm ? +(demandPsi*Math.pow(q/demandGpm,1.85)).toFixed(1) : null;
+    merged.push({ flow:Math.round(q), supply:sup!==null?+sup.toFixed(1):null, supplyLessHose:supLessHose!==null?+supLessHose.toFixed(1):null, demand:dem });
+  }
+  const totalDemand = demandGpm+hose;
+  const supplyAtDemand = isPump && pumpPts ? interpPump(pumpPts,totalDemand) : hazenWilliams(staticPsi,residualPsi,flowGpm,totalDemand);
+  const margin = supplyAtDemand !== null ? +(supplyAtDemand - demandPsi).toFixed(1) : null;
+  return { merged, pumpPts, nfpa, adequate:margin!==null&&margin>=0, margin, supplyAtDemand, demandGpm, demandPsi, hose, maxFlow, totalDemand };
+}
+
+function WaterSupplyPanel({ answers, onChange }) {
+  const supplyType = answers["ws_supply_type"];
+  const isPump     = supplyType === "fire_pump";
+  const isHydrant  = supplyType === "hydrant";
+  const isDrain    = supplyType === "drain";
+
+  const NAVY="#0C1A2E"; const GOLD="#C9A84C"; const GRN="#16a34a"; const RED="#dc2626";
+
+  const n  = id => parseFloat(answers[id]) || 0;
+  const fld = (id, label, placeholder, unit) => (
+    <NestedField key={id} id={id} label={label} placeholder={placeholder} unit={unit}
+      value={answers[id]||""} onChange={v=>onChange(id,v)} />
+  );
+
+    const drainK        = parseFloat(answers["ws_drain_k"]) || 90;
+  const drainResidual = n("ws_residual");
+  const drainFlow     = drainK > 0 && drainResidual > 0 ? +(drainK * Math.sqrt(drainResidual)).toFixed(0) : null;
+
+  const hasEnoughForChart = supplyType && answers["ws_static"] && answers["ws_demand_gpm"] && answers["ws_demand_psi"] &&
+    (isPump ? (answers["ws_100_flow"] && answers["ws_100_discharge"]) : answers["ws_residual"] && (isDrain ? true : answers["ws_flow_gpm"]));
+
+    const chartAnswers = isDrain && drainFlow
+    ? { ...answers, ws_flow_gpm: String(drainFlow) }
+    : answers;
+
+  if (!supplyType) return null;
+
+  return (
+    <div style={{marginTop:16}}>
+
+      {/* ── SYSTEM DEMAND (always shown once supply type selected) ── */}
+      <FieldGroup label="System Demand" navy={NAVY} gold={GOLD}>
+        {fld("ws_demand_gpm",     "Hydraulic Demand at Base of Riser (excl. hose)", "e.g. 1221", "gpm")}
+        {fld("ws_demand_psi",     "Required Pressure at Base of Riser",             "e.g. 44",   "psi")}
+        {fld("ws_hose_allowance", "Hose Stream Allowance",                          "e.g. 500",  "gpm")}
+        {fld("ws_flow_date",      "Flow Test Date",                                 "MM/DD/YYYY", "")}
+      </FieldGroup>
+
+      {/* ── 2" DRAIN TEST ── */}
+      {isDrain && (
+        <FieldGroup label='2" Drain Test Data' navy={NAVY} gold={GOLD}>
+          {fld("ws_static",    "Static Pressure (drain closed)",          "e.g. 75",  "psi")}
+          {fld("ws_residual",  "Residual Pressure (drain fully open)",    "e.g. 58",  "psi")}
+          <NestedField id="ws_drain_k" label="Drain k-factor (≈90 for standard 2" drain)"
+            placeholder="e.g. 90" unit="" value={answers["ws_drain_k"]||"90"} onChange={v=>onChange("ws_drain_k",v)} />
+          {drainFlow && (
+            <div style={{padding:"10px 14px",background:"#f0fdf4",borderRadius:7,border:"1px solid #bbf7d0",fontSize:13,color:GRN,fontWeight:600,marginTop:4}}>
+              Estimated Flow: {drainFlow} gpm &nbsp;(auto-calculated: k × √P)
+            </div>
+          )}
+        </FieldGroup>
+      )}
+
+      {/* ── HYDRANT FLOW TEST ── */}
+      {isHydrant && (
+        <FieldGroup label="Hydrant Flow Test Data" navy={NAVY} gold={GOLD}>
+          {fld("ws_static",   "Static Pressure (all hydrants closed)",          "e.g. 80",   "psi")}
+          {fld("ws_residual", "Residual Pressure (at test hydrant while flowing)", "e.g. 65", "psi")}
+          {fld("ws_flow_gpm", "Test Flow (measured at flow hydrant)",            "e.g. 1500", "gpm")}
+        </FieldGroup>
+      )}
+
+      {/* ── FIRE PUMP ── */}
+      {isPump && (
+        <>
+          <FieldGroup label="Fire Pump — Nameplate / Design Data" navy={NAVY} gold={GOLD}>
+            {fld("ws_pump_mfr",        "Pump Manufacturer",        "e.g. Peerless",  "")}
+            {fld("ws_pump_model",       "Pump Model",               "e.g. 4AE14A",    "")}
+            {fld("ws_pump_rated_flow",  "Rated Flow",               "e.g. 1500",      "gpm")}
+            {fld("ws_pump_rated_psi",   "Rated Pressure",           "e.g. 65",        "psi")}
+            {fld("ws_pump_rated_rpm",   "Rated RPM",                "e.g. 1770",      "rpm")}
+            {fld("ws_pump_driver",      "Driver Type",              "Electric / Diesel", "")}
+            {fld("ws_pump_year",        "Year Installed",           "e.g. 2010",      "")}
+          </FieldGroup>
+
+          <FieldGroup label="Fire Pump — Churn Test (0% Flow)" navy={NAVY} gold={GOLD}>
+            {fld("ws_churn_suction",    "Suction Pressure at Churn",    "e.g. 66",  "psi")}
+            {fld("ws_churn_discharge",  "Discharge Pressure at Churn",  "e.g. 136", "psi")}
+            {fld("ws_churn_rpm",        "Pump RPM at Churn",            "e.g. 1799","rpm")}
+          </FieldGroup>
+
+          <FieldGroup label="Fire Pump — 100% Rated Flow Test" navy={NAVY} gold={GOLD}>
+            {fld("ws_100_suction",   "Suction Pressure",   "e.g. 43",   "psi")}
+            {fld("ws_100_discharge", "Discharge Pressure", "e.g. 105",  "psi")}
+            {fld("ws_100_flow",      "Flow",               "e.g. 1524", "gpm")}
+            {fld("ws_100_rpm",       "Pump RPM",           "e.g. 1785", "rpm")}
+          </FieldGroup>
+
+          <FieldGroup label="Fire Pump — 150% Flow Test" navy={NAVY} gold={GOLD}>
+            {fld("ws_150_suction",   "Suction Pressure",   "e.g. 24",   "psi")}
+            {fld("ws_150_discharge", "Discharge Pressure", "e.g. 71",   "psi")}
+            {fld("ws_150_flow",      "Flow",               "e.g. 2060", "gpm")}
+            {fld("ws_150_rpm",       "Pump RPM",           "e.g. 1783", "rpm")}
+          </FieldGroup>
+        </>
+      )}
+
+      {/* ── NOTES ── */}
+      <div style={{marginTop:12,background:"#fff",border:"1px solid #e2e8f0",borderRadius:10,padding:"14px 18px"}}>
+        <div style={{fontSize:13,fontWeight:600,color:NAVY,marginBottom:8,fontFamily:SERIF}}>Water Supply Notes / Observations</div>
+        <textarea style={{width:"100%",padding:"9px 12px",fontSize:13,border:"2px solid #e2e8f0",borderRadius:7,
+          background:"#f8fafc",color:"#1e293b",fontFamily:SERIF,resize:"vertical",boxSizing:"border-box",lineHeight:1.6}}
+          rows={3} placeholder="Note any supply deficiencies, impairments, recent test history, or unusual conditions…"
+          value={answers["ws_notes"]||""} onChange={e=>onChange("ws_notes",e.target.value)} />
+      </div>
+
+      {/* ── LIVE ANALYSIS CHART ── */}
+      {hasEnoughForChart && <WaterSupplyChart answers={chartAnswers} />}
+    </div>
+  );
+}
+
+function FieldGroup({ label, navy, gold, children }) {
+  return (
+    <div style={{marginTop:12,border:"1px solid #e2e8f0",borderRadius:10,overflow:"hidden",background:"#fff"}}>
+      <div style={{background:navy,padding:"9px 16px",display:"flex",alignItems:"center",gap:8}}>
+        <div style={{width:3,height:16,background:gold,borderRadius:2,flexShrink:0}}/>
+        <span style={{fontSize:11,fontWeight:700,color:"#f8fafc",letterSpacing:1.5,fontFamily:MONO}}>
+          {label.toUpperCase()}
+        </span>
+      </div>
+      <div style={{padding:"8px 16px 14px",display:"flex",flexDirection:"column",gap:10}}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function NestedField({ id, label, placeholder, unit, value, onChange }) {
+  return (
+    <div>
+      <div style={{fontSize:12,fontWeight:600,color:"#334155",marginBottom:5,fontFamily:SERIF}}>{label}</div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <input style={{flex:unit?"0 0 160px":"1",padding:"8px 12px",fontSize:13,border:"2px solid #e2e8f0",
+          borderRadius:7,background:value?"#fffbf0":"#f8fafc",color:"#1e293b",
+          fontFamily:SERIF,borderColor:value?"#C9A84C":"#e2e8f0"}}
+          type={isNaN(placeholder)?'text':'number'} placeholder={placeholder||""}
+          value={value} onChange={e=>onChange(e.target.value)} />
+        {unit && <span style={{fontSize:12,color:"#64748b",whiteSpace:"nowrap"}}>{unit}</span>}
+      </div>
+    </div>
+  );
+}
+
+function WaterSupplyChart({ answers }) {
+  const isPump = answers["ws_supply_type"] === "fire_pump";
+  const calc = calcWaterSupply(answers);
+  const { merged, nfpa, adequate, margin, supplyAtDemand, demandGpm, hose, totalDemand } = calc;
+  const GRN="#16a34a"; const RED="#dc2626"; const NAVY="#0C1A2E";
+  return (
+    <div style={{marginTop:16}}>
+      <div style={{padding:"14px 20px",borderRadius:"10px 10px 0 0",background:adequate?GRN:RED,color:"#fff",display:"flex",alignItems:"center",gap:12}}>
+        <span style={{fontSize:24}}>{adequate?"✓":"⚠"}</span>
+        <div>
+          <div style={{fontWeight:700,fontSize:15,fontFamily:SERIF}}>Water Supply is {adequate?"ADEQUATE":"INADEQUATE"}</div>
+          <div style={{fontSize:12,opacity:.9}}>{margin!==null?`Margin: ${margin>=0?"+":""}${margin} psi at ${Math.round(totalDemand)} gpm total demand`:""}</div>
+        </div>
+      </div>
+      <div style={{background:"#fff",padding:"16px 8px",border:"1px solid #e2e8f0",borderTop:"none"}}>
+        <div style={{fontSize:10,color:"#94a3b8",textAlign:"center",marginBottom:6,fontFamily:MONO,letterSpacing:1}}>
+          WATER SUPPLY vs. SYSTEM DEMAND — N¹·⁸⁵ METHOD
+        </div>
+        <ResponsiveContainer width="100%" height={260}>
+          <LineChart data={merged} margin={{top:10,right:20,left:0,bottom:20}}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/>
+            <XAxis dataKey="flow" label={{value:"Flow (gpm)",position:"insideBottom",offset:-10,fontSize:11}} tick={{fontSize:10}}/>
+            <YAxis label={{value:"Pressure (psi)",angle:-90,position:"insideLeft",fontSize:11}} tick={{fontSize:10}}/>
+            <Tooltip formatter={(v,n)=>[v!==null?v+" psi":"—",n]} labelFormatter={v=>v+" gpm"}/>
+            <Legend wrapperStyle={{fontSize:11}}/>
+            <Line type="monotone" dataKey="supply" name="Water Supply" stroke="#1d4ed8" strokeWidth={2.5} dot={false} connectNulls/>
+            <Line type="monotone" dataKey="supplyLessHose" name="Supply Less Hose" stroke="#60a5fa" strokeWidth={2} strokeDasharray="5 5" dot={false} connectNulls/>
+            <Line type="monotone" dataKey="demand" name="System Demand" stroke={RED} strokeWidth={2.5} dot={false} connectNulls/>
+            {supplyAtDemand!==null&&<ReferenceDot x={Math.round(totalDemand)} y={+supplyAtDemand.toFixed(1)} r={5} fill={adequate?GRN:RED} stroke="#fff" strokeWidth={2}/>}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+      {isPump && nfpa && (
+        <div style={{background:"#fff",border:"1px solid #e2e8f0",borderTop:"none",padding:"16px 20px"}}>
+          <div style={{fontSize:11,fontWeight:700,color:NAVY,marginBottom:10,fontFamily:MONO,letterSpacing:1}}>NFPA 20/25 FIRE PUMP PERFORMANCE (AFFINITY-LAW CORRECTED)</div>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+            <thead><tr style={{background:NAVY}}>
+              {["Test Point","Corrected Flow","Corrected Pressure","Criterion","Result"].map(h=><th key={h} style={thDarkStyle}>{h}</th>)}
+            </tr></thead>
+            <tbody>
+              {[
+                {label:"Churn (0%)",flow:"0",psi:nfpa.cCP?.toFixed(1),crit:"≤ 140% rated",pass:nfpa.passChurn},
+                {label:"100% Rated",flow:nfpa.cF100?.toFixed(0),psi:nfpa.cP100?.toFixed(1),crit:"≥ 100% rated",pass:nfpa.pass100},
+                {label:"150% Flow",flow:nfpa.cF150?.toFixed(0),psi:nfpa.cP150?.toFixed(1),crit:"≥ 65% rated",pass:nfpa.pass150},
+              ].map((r,i)=>(
+                <tr key={i} style={{background:i%2===0?"#f8fafc":"#fff"}}>
+                  <td style={{padding:"7px 10px",fontWeight:600}}>{r.label}</td>
+                  <td style={{padding:"7px 10px"}}>{r.flow} gpm</td>
+                  <td style={{padding:"7px 10px"}}>{r.psi} psi</td>
+                  <td style={{padding:"7px 10px",color:"#64748b"}}>{r.crit}</td>
+                  <td style={{padding:"7px 10px"}}><span style={{fontWeight:700,color:r.pass?GRN:RED}}>{r.pass?"✓ PASS":"✗ FAIL"}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{fontSize:10,color:"#94a3b8",marginTop:8,fontStyle:"italic"}}>Corrected to rated RPM via affinity laws. Customer report shows chart and pass/fail only — calculations not shown.</div>
+        </div>
+      )}
+      <div style={{background:"#fff",border:"1px solid #e2e8f0",borderTop:"none",padding:"14px 20px",borderRadius:"0 0 10px 10px"}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+          <thead><tr style={{background:"#f1f5f9"}}>
+            {["Parameter","Available","Required","Margin","Status"].map(h=><th key={h} style={thStyle}>{h}</th>)}
+          </tr></thead>
+          <tbody><tr>
+            <td style={{padding:"7px 10px",fontWeight:600}}>Pressure at Total Demand</td>
+            <td style={{padding:"7px 10px"}}>{supplyAtDemand?.toFixed(1)} psi</td>
+            <td style={{padding:"7px 10px"}}>{answers["ws_demand_psi"]} psi</td>
+            <td style={{padding:"7px 10px",fontWeight:700,color:adequate?GRN:RED}}>{margin!==null?(margin>=0?"+":"")+margin+" psi":"—"}</td>
+            <td style={{padding:"7px 10px"}}><span style={{fontWeight:700,color:adequate?GRN:RED}}>{adequate?"✓ PASS":"✗ FAIL"}</span></td>
+          </tr></tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+const NAVY = "#0c1a2e";
+const GOLD = "#c9a84c";
+const S = {
+  app: { display: "flex", minHeight: "100vh", background: "#f0f2f5", fontFamily:SERIF },
+
+    sidebar: { width: 240, minWidth: 240, background: NAVY, color: "#e2e8f0", display: "flex", flexDirection: "column", padding: "0 0 24px", position: "sticky", top: 0, height: "100vh", overflowY: "auto",
+    "@media(max-width:768px)": { display: "none" } },
+  sidebarLogo: { display: "flex", alignItems: "center", gap: 12, padding: "22px 20px 18px", borderBottom: "1px solid #1e3a5f" },
+  logoMark: { background: GOLD, color: NAVY, fontWeight: 900, fontSize: 13, letterSpacing: 1, padding: "6px 8px", borderRadius: 4, fontFamily:MONO },
+  logoTitle: { fontSize: 13, fontWeight: 700, color: "#f8fafc", letterSpacing: 0.5 },
+  logoSub: { fontSize: 10, color: "#64748b", letterSpacing: 0.5, marginTop: 1 },
+  sidebarProgress: { padding: "14px 20px", borderBottom: "1px solid #1e3a5f" },
+  spLabel: { fontSize: 10, letterSpacing: 2, color: "#64748b", fontFamily:MONO, marginBottom: 6 },
+  spBar: { height: 4, background: "#1e3a5f", borderRadius: 2 },
+  spFill: { height: "100%", background: GOLD, borderRadius: 2, transition: "width 0.4s" },
+  spPct: { fontSize: 11, color: "#94a3b8", marginTop: 5 },
+  sidebarNav: { flex: 1, padding: "10px 0" },
+  navItem: { display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 20px", background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 13, textAlign: "left", fontFamily:SERIF, transition: "background 0.15s, color 0.15s" },
+  navItemActive: { background: "#1e3a5f", color: "#fff", borderRight: `3px solid ${GOLD}` },
+  navItemDone: { color: "#a3e635" },
+  navIcon: { fontSize: 16, width: 20, textAlign: "center" },
+  navLabel: { flex: 1 },
+  navCheck: { fontSize: 11, color: "#a3e635" },
+  navScore: { fontSize: 11, fontWeight: 700, fontFamily:MONO },
+  sidebarReport: { margin: "0 16px", padding: "10px 0", background: GOLD, color: NAVY, border: "none", borderRadius: 6, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily:SERIF, letterSpacing: 0.5 },
+
+    mobileHeader: { display: "none", position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: NAVY, padding: "0 16px", height: 54, alignItems: "center", gap: 12,
+    "@media(max-width:768px)": { display: "flex" } },
+  menuBtn: { background: "none", border: "none", color: "#fff", fontSize: 20, cursor: "pointer", padding: "4px 8px" },
+  mobileTitle: { flex: 1, display: "flex", flexDirection: "column" },
+  mobileTitleMain: { fontSize: 12, fontWeight: 700, color: GOLD, letterSpacing: 1 },
+  mobileTitleSub: { fontSize: 11, color: "#94a3b8" },
+  mobileReport: { background: GOLD, color: NAVY, border: "none", borderRadius: 5, padding: "6px 12px", fontWeight: 700, fontSize: 11, cursor: "pointer" },
+
+    mobileDrawer: { position: "fixed", top: 54, left: 0, right: 0, bottom: 0, background: NAVY, zIndex: 99, overflowY: "auto", display: "flex", flexDirection: "column" },
+  drawerHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", borderBottom: "1px solid #1e3a5f" },
+  drawerTitle: { color: "#f8fafc", fontWeight: 700, fontSize: 14 },
+  drawerClose: { background: "none", border: "none", color: "#94a3b8", fontSize: 18, cursor: "pointer" },
+  drawerItem: { display: "flex", alignItems: "center", gap: 12, padding: "14px 20px", background: "none", border: "none", borderBottom: "1px solid #1e3a5f", color: "#94a3b8", cursor: "pointer", fontSize: 14, fontFamily:SERIF, width: "100%", textAlign: "left" },
+  drawerItemActive: { background: "#1e3a5f", color: "#fff" },
+
+    main: { flex: 1, overflowY: "auto", paddingTop: 0 },
+  sectionWrap: { maxWidth: 800, margin: "0 auto", padding: "28px 24px 48px" },
+
+    secHead: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24, paddingBottom: 16, borderBottom: `2px solid ${NAVY}` },
+  secHeadLeft: { display: "flex", alignItems: "flex-start", gap: 16 },
+  secHeadIcon: { fontSize: 40, lineHeight: 1 },
+  secHeadTitle: { margin: 0, fontSize: 22, fontWeight: 700, color: NAVY },
+  secHeadDesc: { margin: "4px 0 0", fontSize: 13, color: "#64748b" },
+  secScore: { textAlign: "right", flexShrink: 0 },
+  secScoreNum: { fontSize: 28, fontWeight: 700 },
+  secScoreLbl: { fontSize: 10, letterSpacing: 1, color: "#94a3b8", fontFamily:MONO },
+
+    questions: { display: "flex", flexDirection: "column", gap: 16 },
+  qCard: { background: "#fff", borderRadius: 10, padding: "16px 20px", border: "2px solid #e2e8f0", transition: "border-color 0.15s" },
+  qCardFilled: { borderColor: NAVY },
+  qLabel: { display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 10 },
+  qNum: { flexShrink: 0, width: 22, height: 22, borderRadius: "50%", background: "#e2e8f0", color: "#64748b", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontFamily:MONO, marginTop: 1 },
+  qNumFilled: { background: NAVY, color: GOLD },
+  qText: { fontSize: 14, fontWeight: 600, color: "#1e293b", lineHeight: 1.5, flex: 1 },
+  qOptional: { fontSize: 10, color: "#94a3b8", fontStyle: "italic", marginLeft: 6, flexShrink: 0, marginTop: 3 },
+  select: { width: "100%", padding: "10px 12px", fontSize: 13, border: "2px solid #e2e8f0", borderRadius: 7, background: "#f8fafc", color: "#64748b", cursor: "pointer", fontFamily:SERIF, appearance: "auto" },
+  selectFilled: { borderColor: "#c9a84c", background: "#fffbf0", color: "#1e293b" },
+  input: { width: "100%", padding: "10px 12px", fontSize: 13, border: "2px solid #e2e8f0", borderRadius: 7, background: "#f8fafc", color: "#1e293b", fontFamily:SERIF, boxSizing: "border-box" },
+  inputWrap: { display: "flex", alignItems: "center", gap: 8 },
+  inputNum: { maxWidth: 200 },
+  inputUnit: { fontSize: 13, color: "#64748b", whiteSpace: "nowrap" },
+  textarea: { width: "100%", padding: "10px 12px", fontSize: 13, border: "2px solid #e2e8f0", borderRadius: 7, background: "#f8fafc", color: "#1e293b", fontFamily:SERIF, resize: "vertical", boxSizing: "border-box", lineHeight: 1.6 },
+
+    navRow: { display: "flex", alignItems: "center", marginTop: 28, gap: 12 },
+  navMid: { flex: 1, textAlign: "center" },
+  navStepNum: { fontSize: 11, color: "#94a3b8", letterSpacing: 1, fontFamily:MONO },
+  btnPrimary: { padding: "11px 22px", background: NAVY, color: "#fff", border: "none", borderRadius: 7, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily:SERIF },
+  btnGhost: { padding: "11px 22px", background: "#fff", color: NAVY, border: `2px solid #e2e8f0`, borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily:SERIF },
+  btnSuccess: { padding: "11px 22px", background: "#15803d", color: "#fff", border: "none", borderRadius: 7, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily:SERIF },
+
+    reportShell: { minHeight: "100vh", background: "#f0f2f5", fontFamily:SERIF },
+  reportHeader: { background: NAVY, color: "#fff", padding: 0 },
+  reportHeaderInner: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 32px", maxWidth: 960, margin: "0 auto" },
+  reportHeaderLeft: {},
+  reportEyebrow: { fontSize: 9, letterSpacing: 3, color: GOLD, fontFamily:MONO, marginBottom: 4 },
+  reportHeaderTitle: { fontSize: 22, fontWeight: 700, color: "#f8fafc" },
+  reportHeaderMeta: { fontSize: 12, color: "#94a3b8", marginTop: 4 },
+  backBtn: { padding: "9px 18px", background: "transparent", color: "#fff", border: "2px solid #334155", borderRadius: 6, fontSize: 12, cursor: "pointer", fontFamily:SERIF, whiteSpace: "nowrap" },
+  reportBody: { maxWidth: 960, margin: "0 auto", padding: "28px 24px 60px" },
+
+  coverBlock: { display: "flex", gap: 24, marginBottom: 28, flexWrap: "wrap" },
+  coverLeft: { flex: 1, background: "#fff", borderRadius: 10, padding: "20px 24px", border: "1px solid #e2e8f0", minWidth: 260 },
+  coverLabel: { fontSize: 9, letterSpacing: 2, color: "#94a3b8", fontFamily:MONO, marginBottom: 2, marginTop: 12 },
+  coverValue: { fontSize: 15, fontWeight: 700, color: NAVY },
+
+  gradeBlock: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 10, border: "3px solid", padding: "24px 32px", minWidth: 180, textAlign: "center" },
+  gradeLetter: { fontSize: 80, fontWeight: 900, lineHeight: 1, fontFamily:SERIF },
+  gradeLabel2: { fontSize: 14, fontWeight: 700, marginTop: 4 },
+  gradeScore: { fontSize: 12, color: "#64748b", margin: "6px 0 10px" },
+  gradeBarBg: { width: "100%", height: 6, background: "#e2e8f0", borderRadius: 3 },
+  gradeBarFill: { height: "100%", borderRadius: 3 },
+
+  rSection: { background: "#fff", borderRadius: 10, border: "1px solid #e2e8f0", marginBottom: 20, overflow: "hidden" },
+  rSectionTitle: { padding: "14px 24px", background: NAVY, color: "#f8fafc", fontWeight: 700, fontSize: 14, letterSpacing: 0.3 },
+  rSectionBody: { padding: "20px 24px" },
+
+  scorecardGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 14 },
+  scorecardItem: { background: "#f8fafc", borderRadius: 8, padding: "12px 16px", border: "1px solid #e2e8f0" },
+  scTop: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 },
+  scIcon: { fontSize: 18 },
+  scName: { flex: 1, fontWeight: 600, fontSize: 13 },
+  scPct: { fontSize: 18, fontWeight: 700 },
+  scBar: { height: 5, background: "#e2e8f0", borderRadius: 3, marginBottom: 6 },
+  scFill: { height: "100%", borderRadius: 3 },
+  scDetail: { fontSize: 11, color: "#94a3b8", fontFamily:MONO },
+
+  table: { width: "100%", borderCollapse: "collapse", fontSize: 13 },
+  th: { background: "#f1f5f9", padding: "8px 12px", textAlign: "left", fontWeight: 700, fontSize: 11, letterSpacing: 0.5, color: "#475569", borderBottom: "2px solid #e2e8f0" },
+  td: { padding: "9px 12px", borderBottom: "1px solid #f1f5f9", verticalAlign: "top", lineHeight: 1.5 },
+  trFlagged: { background: "#fef2f2" },
+
+  sectionNarrative: { marginTop: 14, padding: "10px 14px", background: "#f8fafc", borderRadius: 6, fontSize: 13, color: "#475569", lineHeight: 1.7, borderLeft: `3px solid ${NAVY}` },
+  narrativeLabel: { fontWeight: 700, color: NAVY },
+  narrative: { margin: 0, lineHeight: 1.8, fontSize: 14, color: "#334155" },
+
+  recHeading: { fontWeight: 700, fontSize: 13, letterSpacing: 0.5, marginBottom: 8, textTransform: "uppercase" },
+  recItem: { fontSize: 13, lineHeight: 1.7, padding: "10px 14px", marginBottom: 8, background: "#fafafa", borderRadius: 6, borderLeft: "4px solid #dc2626" },
+  pre: { background: "#f8fafc", borderRadius: 6, padding: "12px 16px", fontSize: 13, lineHeight: 1.7, whiteSpace: "pre-wrap", color: "#334155", margin: 0, fontFamily:SERIF, border: "1px solid #e2e8f0" },
+
+  reportFooter: { marginTop: 32, padding: "16px 24px", background: "#f8fafc", borderRadius: 8, fontSize: 11, color: "#94a3b8", lineHeight: 1.7, borderTop: "2px solid #e2e8f0", fontStyle: "italic" },
+};
